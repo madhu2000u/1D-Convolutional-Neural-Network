@@ -21,9 +21,10 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
     parameter ADDR_X_SIZE = 2;
     parameter ADDE_W_SIZE = 4;
     parameter WIDTH_MEM_WR_W = 4;           //Size of counter that writes to memory and reads from memory W (cntrMem & cntrMemW)
-    parameter WIDTH_MAC_X = 3;              //Size of counter that handles MAC delay and reads from memory X (cntrMac & cntrMemX)
+    parameter WIDTH_MAC_X = 4;              //Size of counter that handles MAC delay and reads from memory X (cntrMac & cntrMemX)
     parameter WIDTH_MEM_READ_X = 2;
     parameter mac_delay = 3;
+
     input clk, reset, input_valid, output_ready;
     input [1:0] count;
     output logic input_ready, output_valid;
@@ -50,40 +51,51 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
     logic [WIDTH_MEM_WR_W-1:0] countMem_W_Out;
 
     logic delay_enable_reg1, delay_enable_reg2, delay_en_acc;
+    logic row1, row2, row3;
 
-    // always_ff @( posedge clk ) begin
-    //     if(reset) begin
-    //         operationState <= 0;
-    //     end
-    //     else if(~operationState && countMemState && countMemOut == 3) begin
-    //         operationState <= 1;
-    //     end
-    //     else if(operationState && countMem_W_Out == 8 && output_ready && output_valid) begin
-    //         operationState <= 0;
-    //     end
-        
-    // end
 
     always_ff @( posedge clk ) begin
         if(reset) begin
-            delay_enable_reg1 <= 0;
-            delay_en_acc <= 0;
+            output_valid <= 0;
+            en_acc <= 0;
+            en_pipeline_reg <= 0;
+            row1 <= 0;
+            row2 <= 0;
+            row3 <= 0;
         end
-        else if(enable_cntrReadMem_X) begin
-            delay_enable_reg1 <= enable_cntrReadMem_X;
-            delay_enable_reg2 <= delay_enable_reg1;
+
+        if((countMacOut == 4 || countMacOut == 7 || countMacOut == 10) && ~clear_acc) begin
+            output_valid <= 1;
+            en_acc <= 0;
+            en_pipeline_reg <= 0;
         end
-        else begin
-            delay_enable_reg1 <= 0;
-            delay_enable_reg2 <= 0;
+        
+        if(countMacOut == 0) begin
+            en_pipeline_reg <= 1;
+        end
+
+        if(countMacOut == 1) begin
+            en_acc <= 1;
+        end       
+        
+
+        if(clear_acc && countMacOut != 10) begin
+            en_acc <= 1;
+            en_pipeline_reg <= 1;
+
+        end
+
+        if(~operationState) begin
+            en_acc <= 0;
+            en_pipeline_reg <= 0;
         end
 
         if(output_valid && output_ready) begin
-            delay_en_acc <= 1;
+            clear_acc <= 1;
+            output_valid <= 0;
         end
-        else
-            delay_en_acc <= 0;
-        
+        else 
+            clear_acc <= 0;
     end
 
 
@@ -92,27 +104,29 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
         
         //TODO add enable_pipeline_multipliesr = ~stall
         if(reset) begin
-            input_ready = 1;
             countMemState = 0;
             operationState = 0;
-            output_valid = 0;
         end
         else if(~operationState) begin   //write mode
             addr_w = countMemOut;
             addr_x = countMemOut;
-            if(input_valid && input_ready) begin
+            input_ready = 1;
+            
+            if(input_valid) begin
                 enable_cntrWriteMem = 1;
                 clear_cntrMem = 0;
                 if(~countMemState) begin
-                    wr_en_w = 1; //enable write W
+                    wr_en_w = input_ready; //enable write W
                     if(countMemOut == 9) begin
+                        input_ready = 0;
                         wr_en_w = 0;     //disable write W
                         clear_cntrMem = 1;     //enable clear signal
                         countMemState = 1;                              
                     end          
                 end
-                if(countMemState) begin
-                    wr_en_x = 1;  //enable write X 
+                else if(countMemState) begin
+                    input_ready = 1;
+                    wr_en_x = input_ready;  //enable write X 
                     if(countMemOut == 3) begin
                         wr_en_x = 0;     //disable write X
                         clear_cntrMem = 1;        //enable clear signal
@@ -121,106 +135,217 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
                         initial_enable = 1;
                         operationState = 1;
                     end
+                    
                 end
             end
 
             else begin
                 enable_cntrWriteMem = 0; //disable write address counter
             end
+
+            // if(clear_cntrMem) begin
+            //     input_ready = 0;
+            // end
+            // else 
+            //     input_ready = 1;
         end
 
-        else if(operationState) begin  //read mode
+        else if(operationState) begin
             addr_x = countMem_X_Out;
             addr_w = countMem_W_Out;
 
-            //clear_cntrMac = 0;
-            clear_cntrMemX = 0;
-            clear_cntrMemW = 0;
-            //clear_acc = 0;
-            clear_reg = 0;
-            //TODO clear pipeline multiplier (connect this clear signal to the reset signal of the DW multiplier since it doesn't have a separate clear signal)
-            
+            enable_cntrMac = 1;
             enable_cntrReadMem_X = 1;
             enable_cntrReadMem_W = 1;
-            enable_cntrMac = 1;
 
-            en_pipeline_reg = 1;
+            clear_cntrMemX = 0;
+            clear_cntrMemW = 0;
+            clear_cntrMac = 0;
+            //en_pipeline_reg = 0;
             //en_acc = 0;
+            // if(countMacOut == 5 || countMacOut == 8 || countMacOut == 11) begin
+            //     output_valid = 1;
+            // end
+            // else begin
+            //     output_valid = 0;
+            // end
 
-            if(countMem_X_Out == 2 && ~output_valid) begin
+            // if(countMacOut == 1) begin
+            //     en_pipeline_reg = 1;
+            // end
+
+            // if(countMacOut == 2) begin
+            //     en_acc = 1;
+            //     initial_enable = 0;
+            // end
+
+            if((countMacOut == 4 || countMacOut == 7 || countMacOut == 10)) begin
+                enable_cntrMac = 0;
                 enable_cntrReadMem_X = 0;
+                enable_cntrReadMem_W = 0;
+            end
+            if(clear_acc) begin
+                enable_cntrMac = 1;
+                enable_cntrReadMem_X = 1;
+                enable_cntrReadMem_W = 1;
+            end
+
+            if(countMacOut == 11) begin
+                operationState = 0;
+                //input_ready = 1;
+                enable_cntrMac = 0;
+                enable_cntrReadMem_X = 0;
+                enable_cntrReadMem_W = 0;
+                clear_cntrMac = 1;
+                clear_cntrMemX = 1;
+                clear_cntrMemW = 1;
+            end
+
+            if(countMacOut >= 1 && ~output_valid) begin
+                //en_pipeline_reg = 1;
+            end
+
+            // if(countMacOut >= 2 && ~output_valid) begin
+            //     en_acc = 1;
+            // end
+
+            if(countMem_X_Out == 2) begin
                 clear_cntrMemX = 1;
             end
-            else if(countMem_X_Out == 0) begin
-                enable_cntrReadMem_X = 1;
-            end
 
-            if(countMacOut == 2 && initial_enable) begin
-                // initial_enable = 0;
-                en_acc = 1;
-                clear_cntrMac = 1;
-            end
-            else if(countMacOut == 0 && ~initial_enable) begin
-                clear_cntrMac = 0;
-                enable_cntrMac = 0; //We don't need the MAC counter anymore after the inital set values because the pipeline is now full
-            end
-
-            if(count == 3) begin
-                output_valid = 1;
-                initial_enable = 0;
-            end
-
-            if(count == 2) begin
-                enable_cntrReadMem_X = 0;
-                enable_cntrReadMem_W = 0;
-            end
-
-            if(~initial_enable && count == 2) begin
+            if(output_valid) begin
                 //en_acc = 0;
-                en_pipeline_reg = 1;
-                //TODO disable pipeliens multiplers as well
+                //en_pipeline_reg = 0;
+                enable_cntrMac = 0;
                 enable_cntrReadMem_X = 0;
                 enable_cntrReadMem_W = 0;
-            end
 
-            if(output_valid && ~output_ready) begin
-                en_acc = 0;
-                en_pipeline_reg = 0;
-                //TODO disable pipeliens multiplers as well
-                enable_cntrReadMem_X = 0;
-                enable_cntrReadMem_W = 0;
+                // if(output_ready) begin
+                    
+                // end
             end
-            else if(output_valid && output_ready) begin
-                clear_acc = delay_en_acc;
-                //output_valid = 0;
-                en_acc = 0;
-                en_pipeline_reg = 0;
-                //TODO disable pipeliens multiplers as well
-                enable_cntrReadMem_X = delay_en_acc;
-                enable_cntrReadMem_W = delay_en_acc;
-                clear_cntrMemX = 0;
-                if(output_data == 0) begin
-                    output_valid = 0;
-                end
-            end
+            // if(~output_valid) begin
+            //     clear_acc = 0;
+            //     //en_acc = 1;
+            //     //en_pipeline_reg = 1;
+            //     // enable_cntrMac = 1;
+            //     // enable_cntrReadMem_X = 1;
+            //     // enable_cntrReadMem_W = 1;
+            // end
 
-            if(output_data == 0 && ~initial_enable) begin
-                clear_acc = 0;
-                en_acc = 1;
-                en_pipeline_reg = delay_enable_reg2;
-                //TODO enable pipeliens multiplers as well
-                //enable_cntrReadMem_X = 1;
-                //enable_cntrReadMem_W = 1;
+            // if(output_valid && output_ready) begin
+            //     clear_acc = 1;
+            // end
+            
+
+            // if(clear_acc) begin
+            //     output_valid = 0;
+            //     if(~output_valid) begin
+            //         en_acc = 1;
+            //         en_pipeline_reg = 1;
+            //         enable_cntrMac = 1;
+            //         enable_cntrReadMem_X = 1;
+            //         enable_cntrReadMem_W = 1;
+            //     end
                 
-            end
+                
+                
+            // end
+           
         end
-        else begin
-            //output_valid = 0;
-            en_acc = 0;
-            en_pipeline_reg = 0;
-            enable_cntrReadMem_X = 0;
-            enable_cntrReadMem_W = 0;
-        end
+
+        // else if(operationState) begin  //read mode
+        //     addr_x = countMem_X_Out;
+        //     addr_w = countMem_W_Out;
+
+        //     //clear_cntrMac = 0;
+        //     clear_cntrMemX = 0;
+        //     clear_cntrMemW = 0;
+        //     //clear_acc = 0;
+        //     clear_reg = 0;
+        //     //TODO clear pipeline multiplier (connect this clear signal to the reset signal of the DW multiplier since it doesn't have a separate clear signal)
+            
+        //     enable_cntrReadMem_X = 1;
+        //     enable_cntrReadMem_W = 1;
+        //     enable_cntrMac = 1;
+
+        //     en_pipeline_reg = 1;
+        //     //en_acc = 0;
+
+        //     if(countMem_X_Out == 2 && ~output_valid) begin
+        //         enable_cntrReadMem_X = 0;
+        //         clear_cntrMemX = 1;
+        //     end
+        //     else if(countMem_X_Out == 0) begin
+        //         enable_cntrReadMem_X = 1;
+        //     end
+
+        //     if(countMacOut == 2 && initial_enable) begin
+        //         // initial_enable = 0;
+        //         en_acc = 1;
+        //         clear_cntrMac = 1;
+        //     end
+        //     else if(countMacOut == 0 && ~initial_enable) begin
+        //         clear_cntrMac = 0;
+        //         enable_cntrMac = 0; //We don't need the MAC counter anymore after the inital set values because the pipeline is now full
+        //     end
+
+        //     if(count == 3) begin
+        //         output_valid = 1;
+        //         initial_enable = 0;
+        //     end
+
+        //     if(count == 2) begin
+        //         enable_cntrReadMem_X = 0;
+        //         enable_cntrReadMem_W = 0;
+        //     end
+
+        //     if(~initial_enable && count == 2) begin
+        //         //en_acc = 0;
+        //         en_pipeline_reg = 1;
+        //         //TODO disable pipeliens multiplers as well
+        //         enable_cntrReadMem_X = 0;
+        //         enable_cntrReadMem_W = 0;
+        //     end
+
+        //     if(output_valid && ~output_ready) begin
+        //         en_acc = 0;
+        //         en_pipeline_reg = 0;
+        //         //TODO disable pipeliens multiplers as well
+        //         enable_cntrReadMem_X = 0;
+        //         enable_cntrReadMem_W = 0;
+        //     end
+        //     else if(output_valid && output_ready) begin
+        //         clear_acc = delay_en_acc;
+        //         //output_valid = 0;
+        //         en_acc = 0;
+        //         en_pipeline_reg = 0;
+        //         //TODO disable pipeliens multiplers as well
+        //         enable_cntrReadMem_X = delay_en_acc;
+        //         enable_cntrReadMem_W = delay_en_acc;
+        //         clear_cntrMemX = 0;
+        //         if(output_data == 0) begin
+        //             output_valid = 0;
+        //         end
+        //     end
+
+        //     if(output_data == 0 && ~initial_enable) begin
+        //         clear_acc = 0;
+        //         en_acc = 1;
+        //         en_pipeline_reg = delay_enable_reg2;
+        //         //TODO enable pipeliens multiplers as well
+        //         //enable_cntrReadMem_X = 1;
+        //         //enable_cntrReadMem_W = 1;
+                
+        //     end
+        // end
+        // else begin
+        //     //output_valid = 0;
+        //     en_acc = 0;
+        //     en_pipeline_reg = 0;
+        //     enable_cntrReadMem_X = 0;
+        //     enable_cntrReadMem_W = 0;
+        // end
     end
 
     // always_ff @( posedge clk ) begin
