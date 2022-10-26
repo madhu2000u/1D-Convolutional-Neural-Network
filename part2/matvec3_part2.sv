@@ -19,7 +19,7 @@ module Counter(clk, reset, clear, enable, countOut);
     
 endmodule
 
-module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w, wr_en_w, clear_acc, clear_reg, en_acc, en_pipeline_reg, enable_mult, input_ready, output_valid, count, output_data);
+module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x, wr_en_x, addr_w, wr_en_w, clear_acc, clear_reg, en_acc, en_pipeline_reg, enable_mult, input_ready, output_valid, count, output_data);
 
     parameter ADDR_X_SIZE = 2;
     parameter ADDR_W_SIZE = 4;
@@ -33,7 +33,7 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
     parameter enable_pipeline_reg_after_initial_delay = pipelineStages + 1;
     parameter enable_acc_after_initial_delay = enable_pipeline_reg_after_initial_delay + 1;
 
-    input clk, reset, input_valid, output_ready;
+    input clk, reset, input_valid, new_matrix, output_ready;
     input [1:0] count;
     output logic input_ready, output_valid;
     input logic signed [27:0] output_data;
@@ -110,7 +110,8 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
         if(~operationState) begin
             // addr_w <= countMem_W_Out;
             // addr_x <= countMem_X_Out;
-            input_ready <= 1;
+            if(new_matrix || ~new_matrix)
+                input_ready <= 1;
             //clear_cntrMem <= 0;
             //clear_cntrMemX <= 0;
             clear_cntrMemW <= 0;
@@ -132,6 +133,15 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
                     enable_mult <= 1;
                 end
             end
+            
+            if(new_matrix) begin
+                countMemState <= 0;
+            end
+            else if(~new_matrix) begin
+                countMemState <= 1;
+            end
+            
+            
         end
         else if(operationState) begin
             // addr_x = countMem_X_Out;
@@ -145,70 +155,10 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
                 clear_cntrMemW <= 1;
                 operationState <= 0;
             end
-
-
-
-
-
         end
         
     end
 
-    // always_ff @( posedge clk ) begin
-    //     if(~operationState) begin
-    //         // addr_w <= countMem_W_Out;
-    //         // addr_x <= countMem_X_Out;
-    //         input_ready <= 1;
-    //         //clear_cntrMem <= 0;
-    //         //clear_cntrMemX <= 0;
-    //         clear_cntrMemW <= 0;
-
-    //         if(input_valid) begin
-    //             if(~countMemState && countMem_W_Out == 8) begin
-    //                 //input_ready <= 0;
-    //                 //clear_cntrMem <= 1;
-    //                 countMemState <= 1;
-    //             end
-    //             else if(countMemState && countMem_X_Out == 2) begin
-    //                 input_ready <= 0;
-    //                 //clearcntmem <= 0;
-    //                 countMemState <= 0;
-    //                 operationState <= 1;
-    //                 //clear_cntrMemX <= 1;
-    //                 clear_cntrMemW <= 1;
-    //                 clear_cntrMac <= 1;
-    //             end
-    //         end
-    //     end
-    //     else if(operationState) begin
-    //         // addr_x = countMem_X_Out;
-    //         // addr_w = countMem_W_Out;
-    //         //clear_cntrMemX <= (countMem_X_Out == 1) ? 1 : 0;
-    //         clear_cntrMemW <= 0;
-    //         clear_cntrMac <= 0;
-
-    //         if(countMacOut == 10 && clear_acc) begin
-    //             clear_cntrMac <= 1;
-    //             clear_cntrMemW <= 1;
-    //             operationState <= 0;
-    //         end
-
-
-
-
-
-    //     end
-        
-    // end
-
-    // always_comb begin
-    //     if(operationState) begin
-    //         enable_cntrReadMem_X = ~output_valid;
-    //         enable_cntrReadMem_W = ~output_valid;
-    //         enable_cntrMac = ~output_valid;
-    //     end
-        
-    // end
 
     always_comb begin
         //enable_cntrWriteMem = input_ready;
@@ -294,7 +244,7 @@ endmodule
 
 
 
-module matvec3_part2(clk, reset, input_valid, input_ready, input_data, output_valid, output_ready, output_data);
+module matvec3_part2(clk, reset, input_valid, input_ready, input_data, new_matrix, output_valid, output_ready, output_data);
     parameter SIZE_X = 3;
     parameter SIZE_W = 9;
     parameter WIDTH = 14;
@@ -313,7 +263,7 @@ module matvec3_part2(clk, reset, input_valid, input_ready, input_data, output_va
     localparam ADDR_X_SIZE = $clog2(SIZE_X);
     localparam ADDR_W_SIZE = $clog2(SIZE_W);
 
-    input clk, reset, input_valid, output_ready;
+    input clk, reset, input_valid, new_matrix, output_ready;
     input signed [13:0] input_data;
 
     logic signed [13:0] vectorMem_data_out, matrixMem_data_out;
@@ -327,7 +277,7 @@ module matvec3_part2(clk, reset, input_valid, input_ready, input_data, output_va
     output logic output_valid, input_ready;
     logic [1:0] count;
 
-    Controller #(ADDR_X_SIZE, ADDR_W_SIZE, WIDTH_MEM_READ_X, WIDTH_MEM_READ_W, WIDTH_MAC, matrixSize, delay_pipeline_n, pipelineStages, enable_pipeline_reg_after_initial_delay, enable_acc_after_initial_delay) controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w, wr_en_w, clear_acc, clear_reg, en_acc, en_pipeline_reg, enable_mult, input_ready, output_valid, count, output_data);
+    Controller #(ADDR_X_SIZE, ADDR_W_SIZE, WIDTH_MEM_READ_X, WIDTH_MEM_READ_W, WIDTH_MAC, matrixSize, delay_pipeline_n, pipelineStages, enable_pipeline_reg_after_initial_delay, enable_acc_after_initial_delay) controller(clk, reset, input_valid, new_matrix, output_ready, addr_x, wr_en_x, addr_w, wr_en_w, clear_acc, clear_reg, en_acc, en_pipeline_reg, enable_mult, input_ready, output_valid, count, output_data);
 
     memory #(WIDTH, SIZE_X) vectorMem(clk, input_data, vectorMem_data_out, addr_x, wr_en_x );
     memory  #(WIDTH, SIZE_W) matrixMem(clk, input_data, matrixMem_data_out, addr_w, wr_en_w);
