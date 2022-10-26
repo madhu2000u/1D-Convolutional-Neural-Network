@@ -282,6 +282,6 @@ module matvec3_part2(clk, reset, input_valid, input_ready, input_data, new_matri
     memory #(WIDTH, SIZE_X) vectorMem(clk, input_data, vectorMem_data_out, addr_x, wr_en_x );
     memory  #(WIDTH, SIZE_W) matrixMem(clk, input_data, matrixMem_data_out, addr_w, wr_en_w);
 
-    part4b_mac #(pipelineStages, WIDTH) macUnit(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, vectorMem_data_out, matrixMem_data_out, output_data, count);
+    mac_part2 #(pipelineStages, WIDTH) macUnit(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, vectorMem_data_out, matrixMem_data_out, output_data, count);
 
 endmodule
