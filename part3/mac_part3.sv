@@ -52,15 +52,15 @@ module D_FF_28b(sum, f, clk, en_acc, clear_acc, reset, count);
 endmodule
 
 
-module part4b_mac(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, a, b, f, count);
-    input clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg;
+module mac_part3(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_mult, a, b, f, count);
+    input clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_mult;
     input signed [13:0] a, b;
 
     output logic [1:0] count;
     output logic signed [27:0] f;
     // output logic valid_output;
     logic signed [27:0] prod, sum;
-    //logic en_acc;
+    logic clr_rst_mpx;
     logic signed [27:0] pipelinedRegOut, pipelinedMultOut;
     //logic signed [13:0] q1,q2;
 
@@ -91,10 +91,12 @@ module part4b_mac(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, c
         else if(~pipelinedRegOut[27] && ~f[27] && sum[27]) begin
             sum = MAX_VALUE;
         end
+
+        clr_rst_mpx = reset ? reset : clear_pipeline_mult;
         
     end
 
-    DW_mult_pipe #(WIDTH, WIDTH, multPipelinedStages, 1, 2) pipelinedMultiplier(clk, ~reset, enable_mult, 1'b1, b, a, pipelinedMultOut); 
+    DW_mult_pipe #(WIDTH, WIDTH, multPipelinedStages, 1, 2) pipelinedMultiplier(clk, ~clr_rst_mpx, enable_mult, 1'b1, b, a, pipelinedMultOut); 
 
     
     D_FF_PipelineReg_28b pipelineReg(pipelinedMultOut, pipelinedRegOut, clk, reset, clear_reg, en_pipeline_reg);
