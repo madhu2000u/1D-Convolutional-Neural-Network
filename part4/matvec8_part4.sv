@@ -77,7 +77,7 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
 
     always_ff @( posedge clk ) begin
         if(reset) begin
-            //output_valid <= 0;
+            output_valid <= 0;
             enable_mult <= 0;
             en_acc <= 0;
             en_pipeline_reg <= 0;
@@ -155,12 +155,12 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
         // else 
         //     clear_acc <= 0;
 
-        // if((countOutputBufferWriteOut == countOutputBufferReadOut + 1 && output_valid && output_ready) || countOutputBufferWriteOut == countOutputBufferReadOut) begin
-        //     output_valid <= 0;
-        // end
-        // else if(countOutputBufferWriteOut > 0) begin
-        //     output_valid <= 1;
-        // end
+        if((countOutputBufferWriteOut == countOutputBufferReadOut + 6'b1 && output_valid && output_ready) || countOutputBufferWriteOut == countOutputBufferReadOut) begin
+            output_valid <= 0;
+        end
+        else if(countOutputBufferWriteOut > 0) begin
+            output_valid <= 1;
+        end
 
         //code from the below ff
         if(~operationState) begin
@@ -305,7 +305,7 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
         addr_w = countWriteMem_W_Out;
         rd_addr = countOutputBufferReadOut;
         wr_addr = countOutputBufferWriteOut;
-        output_valid = 0;
+        //output_valid = 0;
         //addr_x = countMem_X_Out;
         wr_en_x_g1_0 = 0; 
         wr_en_x_g1_1 = 0;
@@ -336,12 +336,13 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
             enable_cntrOutputBufferRead = 0;
         end
 
-        if((countOutputBufferWriteOut == countOutputBufferReadOut + 1 && output_valid && output_ready) || countOutputBufferWriteOut == countOutputBufferReadOut) begin
-            output_valid = 0;
-        end
-        else if(countOutputBufferWriteOut > 0) begin
-            output_valid = 1;
-        end
+        
+        // if(reset || (countOutputBufferWriteOut - 1 == countOutputBufferReadOut && output_valid && output_ready) || countOutputBufferWriteOut == countOutputBufferReadOut) begin
+        //     output_valid = 0;
+        // end
+        // else if(countOutputBufferWriteOut > 0) begin
+        //     output_valid = 1;
+        // end
 
         if(operationState) begin    //read mode
 

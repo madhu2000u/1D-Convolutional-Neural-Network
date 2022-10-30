@@ -23,13 +23,7 @@ module mac_part4(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, cl
     logic signed [27:0] pipelinedMultOut;
 
     parameter multPipelinedStages = 2;
-    parameter integer WIDTH = 14;
-
-
-
-    logic [27:0] MIN_VALUE, MAX_VALUE;
-    assign MAX_VALUE = 28'h7ffffff;
-    assign MIN_VALUE = 28'h8000000;  
+    parameter integer WIDTH = 14;  
     
     always_comb begin
         clr_rst_mpx = reset ? reset : clear_pipeline_mult;
