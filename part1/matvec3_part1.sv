@@ -9,9 +9,6 @@ module Counter(clk, reset, clear, enable, countOut);
         if(reset || clear)
             countOut <= 0;
         else if(enable) begin
-            // if(countOut == 2) begin
-            //     countOut <= 0;
-            // end
             countOut <= countOut + 1;
         end        
     end
@@ -19,38 +16,35 @@ module Counter(clk, reset, clear, enable, countOut);
     
 endmodule
 
-module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w, wr_en_w, clear_acc, clear_reg, en_acc, en_pipeline_reg, enable_mult, input_ready, output_valid, count, output_data);
+module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w, wr_en_w, clear_acc, en_acc, en_pipeline_reg, enable_mult, input_ready, output_valid, output_data);
 
     parameter ADDR_X_SIZE = 2;
     parameter ADDR_W_SIZE = 4;
-    parameter WIDTH_MEM_READ_X = 2;         //Size of counter that writes to memory and reads from memory X (cntrMemX)
-    parameter WIDTH_MEM_READ_W = 4;         //Size of counter that writes to memory and reads from memory W (cntrMemW)
-    parameter WIDTH_MAC = 4;                //Size of counter that handles MAC delay(cntrMac)
+    parameter WIDTH_MEM_READ_X = 2;         
+    parameter WIDTH_MEM_READ_W = 4;         
+    parameter WIDTH_MAC = 4;                
 
     parameter matrixSize = 3;
     parameter delay_pipeline_n = 4;
     parameter pipelineStages = 0;
-    parameter enable_pipeline_reg_after_initial_delay = pipelineStages + 1;
-    parameter enable_acc_after_initial_delay = enable_pipeline_reg_after_initial_delay + 1;
+    parameter enable_pipeline_reg_after_initial_delay = pipelineStages + 1;             
+    parameter enable_acc_after_initial_delay = enable_pipeline_reg_after_initial_delay + 1;  
 
     input clk, reset, input_valid, output_ready;
-    input [1:0] count;
     output logic input_ready, output_valid;
     input logic signed [27:0] output_data;
 
     output logic [ADDR_X_SIZE-1:0] addr_x;  
     output logic [ADDR_W_SIZE-1:0] addr_w;
-    output logic wr_en_x, wr_en_w, clear_acc, clear_reg, en_acc, en_pipeline_reg, enable_mult;    
+    output logic wr_en_x, wr_en_w, clear_acc, en_acc, en_pipeline_reg, enable_mult;    
 
-    logic countMemState;        //State that keeps track of weather the counter is outputting addresses for the matrix memory or the vector memory.     
-    logic operationState;   //0 -> writing state, 1 -> reading state
+    logic countMemState;                                        //0 -> state that tells we are writing to matrix, 1 -> state that tells we are writing to vector     
+    logic operationState;                                       //0 -> writing state, 1 -> reading/execution state
 
-    logic clear_cntrMem, enable_cntrWriteMem;        //Counter that handles (produces addresses) to write to both memories
-    logic clear_cntrMac, enable_cntrMac;             //Counter that handles delay in MAC arithmetic for output_valid signals just for initial stages until the pipeline if full
-    logic clear_cntrMemX, enable_cntrReadMem_X;      //Counter that handles (produces addresses) to read from vector memory (X)
-    logic clear_cntrMemW, enable_cntrReadMem_W;      //Counter that handles (produces addresses) to read from matrix memory (W)
+    logic clear_cntrMac, enable_cntrMac;             
+    logic clear_cntrMemX, enable_cntrReadMem_X;      
+    logic clear_cntrMemW, enable_cntrReadMem_W;      
 
-    logic [WIDTH_MEM_READ_W-1:0] countMemOut, countMemOutDelay;
     logic [WIDTH_MAC-1:0] countMacOut;
     logic [WIDTH_MEM_READ_X-1:0] countMem_X_Out;
     logic [WIDTH_MEM_READ_W-1:0] countMem_W_Out;
@@ -62,156 +56,81 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
             enable_mult <= 0;
             en_acc <= 0;
             en_pipeline_reg <= 0;
-
-            //new
             countMemState <= 0;
             operationState <= 0;
-            //new
             
         end
 
-        if((countMacOut == (delay_pipeline_n) || countMacOut == (delay_pipeline_n + matrixSize) || countMacOut == (delay_pipeline_n + 2 * matrixSize)) && ~clear_acc) begin
+        if((countMacOut == (delay_pipeline_n) || countMacOut == (delay_pipeline_n + matrixSize) || countMacOut == (delay_pipeline_n + 2 * matrixSize)) && ~clear_acc) begin     //When output is valid, stall execution by disabling all multipliers, registers and accumulators until output_ready is asserted and value is sampled (check reference #1)
             output_valid <= 1;
             enable_mult <= 0;
             en_acc <= 0;
             en_pipeline_reg <= 0;
         end
         
-        if(countMacOut == enable_pipeline_reg_after_initial_delay) begin
+        if(countMacOut == enable_pipeline_reg_after_initial_delay) begin        //enable the pipeline register after this delay to pass through a valid value
             en_pipeline_reg <= 1;
         end
 
-        if(countMacOut == enable_acc_after_initial_delay) begin
+        if(countMacOut == enable_acc_after_initial_delay) begin                 //enable the accumulator after this delay to pass through a valid value
             en_acc <= 1;
         end       
         
 
-        if(clear_acc && countMacOut != (delay_pipeline_n + 2 * matrixSize)) begin
+        if(clear_acc && countMacOut != (delay_pipeline_n + 2 * matrixSize)) begin      //When cleac_acc is asserted(by another part of the control logic (check reference #1)), it implies output data was sampled and we can un-stall the execution
             enable_mult <= 1;
             en_acc <= 1;
             en_pipeline_reg <= 1;
 
         end
 
-        if(~operationState) begin
+        if(~operationState) begin               //Disable execution when we switch to writing state
             enable_mult <= 0;
             en_acc <= 0;
             en_pipeline_reg <= 0;
         end
 
-        if(output_valid && output_ready) begin
+        if(output_valid && output_ready) begin     //(reference #1). On posedge when output_valid and output_ready is asserted, the valid data is sampled and we clear the accumulator and de-assert output_valid
             clear_acc <= 1;
             output_valid <= 0;
         end
         else 
             clear_acc <= 0;
 
-        //code from the below ff
-        if(~operationState) begin
-            // addr_w <= countMem_W_Out;
-            // addr_x <= countMem_X_Out;
+        if(~operationState) begin           //when in write mode, we are ready to take in new input
             input_ready <= 1;
-            //clear_cntrMem <= 0;
-            //clear_cntrMemX <= 0;
             clear_cntrMemW <= 0;
 
             if(input_valid) begin
-                if(~countMemState && countMem_W_Out == 8) begin
-                    //input_ready <= 0;
-                    //clear_cntrMemW <= 1;
+                if(~countMemState && countMem_W_Out == 8) begin     //we are writing to matrix, once written switch state to vector
                     countMemState <= 1;
                 end
-                else if(countMemState && countMem_X_Out == 2) begin
+                else if(countMemState && countMem_X_Out == 2) begin     //we are writing to vector, once written switch state back to matrix and also switch state to execution state (operationState = 1)
                     input_ready <= 0;
-                    //clearcntmem <= 0;
                     countMemState <= 0;
                     operationState <= 1;
-                    //clear_cntrMemX <= 1;
                     clear_cntrMemW <= 1;
                     clear_cntrMac <= 1;
                     enable_mult <= 1;
                 end
             end
         end
-        else if(operationState) begin
-            // addr_x = countMem_X_Out;
-            // addr_w = countMem_W_Out;
-            //clear_cntrMemX <= (countMem_X_Out == 1) ? 1 : 0;
+        else if(operationState) begin       //read/execution state
             clear_cntrMemW <= 0;
             clear_cntrMac <= 0;
 
-            if(countMacOut == (delay_pipeline_n + 2 * matrixSize) && clear_acc) begin
+            if(countMacOut == (delay_pipeline_n + 2 * matrixSize) && clear_acc) begin       //we have the final value of matrix at this delay and waiting for clear_acc to be asserted once value is sampled and then we switch to write mode
                 clear_cntrMac <= 1;
                 clear_cntrMemW <= 1;
                 operationState <= 0;
             end
 
-
-
-
-
         end
         
     end
 
-    // always_ff @( posedge clk ) begin
-    //     if(~operationState) begin
-    //         // addr_w <= countMem_W_Out;
-    //         // addr_x <= countMem_X_Out;
-    //         input_ready <= 1;
-    //         //clear_cntrMem <= 0;
-    //         //clear_cntrMemX <= 0;
-    //         clear_cntrMemW <= 0;
-
-    //         if(input_valid) begin
-    //             if(~countMemState && countMem_W_Out == 8) begin
-    //                 //input_ready <= 0;
-    //                 //clear_cntrMem <= 1;
-    //                 countMemState <= 1;
-    //             end
-    //             else if(countMemState && countMem_X_Out == 2) begin
-    //                 input_ready <= 0;
-    //                 //clearcntmem <= 0;
-    //                 countMemState <= 0;
-    //                 operationState <= 1;
-    //                 //clear_cntrMemX <= 1;
-    //                 clear_cntrMemW <= 1;
-    //                 clear_cntrMac <= 1;
-    //             end
-    //         end
-    //     end
-    //     else if(operationState) begin
-    //         // addr_x = countMem_X_Out;
-    //         // addr_w = countMem_W_Out;
-    //         //clear_cntrMemX <= (countMem_X_Out == 1) ? 1 : 0;
-    //         clear_cntrMemW <= 0;
-    //         clear_cntrMac <= 0;
-
-    //         if(countMacOut == 10 && clear_acc) begin
-    //             clear_cntrMac <= 1;
-    //             clear_cntrMemW <= 1;
-    //             operationState <= 0;
-    //         end
-
-
-
-
-
-    //     end
-        
-    // end
-
-    // always_comb begin
-    //     if(operationState) begin
-    //         enable_cntrReadMem_X = ~output_valid;
-    //         enable_cntrReadMem_W = ~output_valid;
-    //         enable_cntrMac = ~output_valid;
-    //     end
-        
-    // end
 
     always_comb begin
-        //enable_cntrWriteMem = input_ready;
         addr_w = countMem_W_Out;
         addr_x = countMem_X_Out;
 
@@ -227,37 +146,25 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
             enable_cntrReadMem_W = ~output_valid;
             enable_cntrMac = ~output_valid;
 
-            if((countMacOut == (delay_pipeline_n) || countMacOut == (delay_pipeline_n + matrixSize) || countMacOut == (delay_pipeline_n + 2 * matrixSize)) && ~clear_acc) begin
+            if((countMacOut == (delay_pipeline_n) || countMacOut == (delay_pipeline_n + matrixSize) || countMacOut == (delay_pipeline_n + 2 * matrixSize)) && ~clear_acc) begin     //Stall address and delay counters when output_valid = 1 and accumulator is not yet cleared (since value is not sampled yet)
                 enable_cntrReadMem_X = 0;
                 enable_cntrReadMem_W = 0;
                 enable_cntrMac = 0;
 
             end
 
-            clear_cntrMemX = (countMem_X_Out == 2) && (enable_cntrReadMem_X) ? 1 : 0;
-
-            // if(countMacOut == 11) begin
-            //     clear_cntrMemX = 1;
-            // end
-            // else begin
-            //     clear_cntrMemX = 0;
-            // end
+            clear_cntrMemX = (countMem_X_Out == 2) && (enable_cntrReadMem_X) ? 1 : 0;       //clear vector counter after count 2 as we don't have any value at address 3 
             
         end
-        else begin              //write mode
+        else begin                          //write mode
             
             enable_cntrMac = 0;
-            //wr_en_w = 0;
-            // if(countMem_X_Out == 3)
-            //     clear_cntrMemX = 1;
-            // else
-            //     clear_cntrMemX = 0;
             
-            clear_cntrMemX = (countMem_X_Out == 3) || (countMacOut == (delay_pipeline_n + 2 * matrixSize) + 1) ? 1 : 0;
+            clear_cntrMemX = (countMem_X_Out == 3) || (countMacOut == (delay_pipeline_n + 2 * matrixSize) + 1)? 1 : 0;         
 
 
 
-            if((~countMemState && ~input_valid) || (countMemState && ~input_valid)) begin
+            if((~countMemState && ~input_valid) || (countMemState && ~input_valid)) begin       
                 enable_cntrReadMem_X = input_valid;
                 enable_cntrReadMem_W = input_valid;
 
@@ -285,7 +192,6 @@ module Controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w
             
     end
 
-    //Counter #(4) cntrMem (clk, reset, clear_cntrMem, enable_cntrWriteMem, countMemOut);
     Counter #(WIDTH_MAC) cntrMac (clk, reset, clear_cntrMac, enable_cntrMac, countMacOut);
     Counter #(WIDTH_MEM_READ_X) cntrMemX (clk, reset, clear_cntrMemX, enable_cntrReadMem_X, countMem_X_Out);
     Counter #(WIDTH_MEM_READ_W) cntrMemW (clk, reset, clear_cntrMemW, enable_cntrReadMem_W, countMem_W_Out);
@@ -298,17 +204,17 @@ module matvec3_part1(clk, reset, input_valid, input_ready, input_data, output_va
     parameter SIZE_X = 3;
     parameter SIZE_W = 9;
     parameter WIDTH = 14;
-    parameter pipelineStages = 11;
+    parameter pipelineStages = 7;
     parameter matrixSize = 3;
-    parameter d0 = 4;       //Base delay(including the pipeline register) when multiplier pipeline stages is 0.
+    parameter d0 = 3;                                           //Base delay(including the pipeline register) when multiplier pipeline stages is 0.
 
-    parameter WIDTH_MEM_READ_X = 2;         //Size of counter that writes to memory and reads from memory X (cntrMemX).
-    parameter WIDTH_MEM_READ_W = 4;           //Size of counter that writes to memory and reads from memory W (cntrMemW).
-    parameter WIDTH_MAC = 5;
+    parameter WIDTH_MEM_READ_X = 2;                             //Width of counter that writes to memory and reads from memory X (cntrMemX).
+    parameter WIDTH_MEM_READ_W = 4;                             //Width of counter that writes to memory and reads from memory W (cntrMemW).
+    parameter WIDTH_MAC = 5;                                    //Width of Mac counter that track delay (cntrMac).
 
-    localparam delay_pipeline_n = d0 + pipelineStages - 1;
-    localparam enable_pipeline_reg_after_initial_delay = pipelineStages - 1;
-    localparam enable_acc_after_initial_delay = enable_pipeline_reg_after_initial_delay + 1;
+    localparam delay_pipeline_n = d0 + pipelineStages;
+    localparam enable_pipeline_reg_after_initial_delay = pipelineStages - 1;                        //The delay after with the pipeline register must be enabled in order to not propagate 'x'/junk values into it
+    localparam enable_acc_after_initial_delay = enable_pipeline_reg_after_initial_delay + 1;        //The delay after which the accumulator must be enabled in order to not propage 'x'/junk values into it
 
     localparam ADDR_X_SIZE = $clog2(SIZE_X);
     localparam ADDR_W_SIZE = $clog2(SIZE_W);
@@ -320,18 +226,17 @@ module matvec3_part1(clk, reset, input_valid, input_ready, input_data, output_va
     logic [ADDR_X_SIZE-1:0] addr_x;
     logic [ADDR_W_SIZE-1:0] addr_w;
     logic wr_en_x, wr_en_w;
-    logic clear_acc, en_acc, clear_reg, en_pipeline_reg, enable_mult;
+    logic clear_acc, en_acc, en_pipeline_reg, enable_mult;
 
 
     output logic signed [27:0] output_data;
     output logic output_valid, input_ready;
-    logic [1:0] count;
 
-    Controller #(ADDR_X_SIZE, ADDR_W_SIZE, WIDTH_MEM_READ_X, WIDTH_MEM_READ_W, WIDTH_MAC, matrixSize, delay_pipeline_n, pipelineStages, enable_pipeline_reg_after_initial_delay, enable_acc_after_initial_delay) controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w, wr_en_w, clear_acc, clear_reg, en_acc, en_pipeline_reg, enable_mult, input_ready, output_valid, count, output_data);
+    Controller #(ADDR_X_SIZE, ADDR_W_SIZE, WIDTH_MEM_READ_X, WIDTH_MEM_READ_W, WIDTH_MAC, matrixSize, delay_pipeline_n, pipelineStages, enable_pipeline_reg_after_initial_delay, enable_acc_after_initial_delay) controller(clk, reset, input_valid, output_ready, addr_x, wr_en_x, addr_w, wr_en_w, clear_acc, en_acc, en_pipeline_reg, enable_mult, input_ready, output_valid, output_data);
 
     memory #(WIDTH, SIZE_X) vectorMem(clk, input_data, vectorMem_data_out, addr_x, wr_en_x );
     memory  #(WIDTH, SIZE_W) matrixMem(clk, input_data, matrixMem_data_out, addr_w, wr_en_w);
 
-    part4b_mac #(pipelineStages, WIDTH) macUnit(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, vectorMem_data_out, matrixMem_data_out, output_data, count);
+    mac_part1 #(pipelineStages, WIDTH) macUnit(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, vectorMem_data_out, matrixMem_data_out, output_data);
 
 endmodule

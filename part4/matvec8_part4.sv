@@ -9,9 +9,6 @@ module Counter(clk, reset, clear, enable, countOut);
         if(reset || clear)
             countOut <= 0;
         else if(enable) begin
-            // if(countOut == 2) begin
-            //     countOut <= 0;
-            // end
             countOut <= countOut + 1;
         end        
     end
@@ -20,26 +17,21 @@ module Counter(clk, reset, clear, enable, countOut);
 endmodule
 
 module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x, 
-    wr_en_x_g1_0, wr_en_x_g1_1, wr_en_x_g1_2, wr_en_x_g1_3, wr_en_x_g1_4, wr_en_x_g1_5, wr_en_x_g1_6, wr_en_x_g1_7,
-    // wr_en_x_g2_0, wr_en_x_g2_1, wr_en_x_g2_2, wr_en_x_g2_3, wr_en_x_g2_4, wr_en_x_g2_5, wr_en_x_g2_6, wr_en_x_g2_7, 
-    addr_w, 
+    wr_en_x_g1_0, wr_en_x_g1_1, wr_en_x_g1_2, wr_en_x_g1_3, wr_en_x_g1_4, wr_en_x_g1_5, wr_en_x_g1_6, wr_en_x_g1_7, addr_w, 
     wr_en_w_g1_0, wr_en_w_g1_1, wr_en_w_g1_2, wr_en_w_g1_3, wr_en_w_g1_4, wr_en_w_g1_5, wr_en_w_g1_6, wr_en_w_g1_7, wr_en_buff, rd_addr, wr_addr,
-    // wr_en_w_g2_0, wr_en_w_g2_1, wr_en_w_g2_2, wr_en_w_g2_3, wr_en_w_g2_4, wr_en_w_g2_5, wr_en_w_g2_6, wr_en_w_g2_7, 
-    clear_pipeline_multiplier, clear_acc, clear_reg, en_adders, clear_adders, en_acc, en_pipeline_reg, enable_mult, input_ready, output_valid, output_data);
+    clear_pipeline_multiplier, enable_mult, input_ready, output_valid, output_data);
 
     parameter ADDR_X_SIZE = 2;
     parameter ADDR_W_SIZE = 4;
-    parameter WIDTH_MEM_READ_X = 2;         //Size of counter that writes to memory and reads from memory X (cntrMemX)
-    parameter WIDTH_MEM_READ_W = 4;         //Size of counter that writes to memory and reads from memory W (cntrWriteMemW)
-    parameter WIDTH_MAC = 4;                //Size of counter that handles MAC delay(cntrMac)
+    parameter WIDTH_MEM_READ_X = 2;                             //Size of counter that writes to memory and reads from memory X (cntrMemX)
+    parameter WIDTH_MEM_READ_W = 4;                             //Size of counter that writes to memory and reads from memory W (cntrWriteMemW)
+    parameter WIDTH_MAC = 4;                                    //Size of counter that handles MAC delay(cntrMac)
     parameter WIDTH_MEM_BANK_CNTR = 8;
     parameter WIDTH_OUTPUT_MEM = 5;
 
     parameter matrixSize = 3;
     parameter delay_pipeline_n = 4;
     parameter pipelineStages = 0;
-    parameter enable_pipeline_reg_after_initial_delay = pipelineStages + 1;
-    parameter enable_acc_after_initial_delay = enable_pipeline_reg_after_initial_delay + 1;
 
     input clk, reset, input_valid, new_matrix, output_ready;
     output logic input_ready, output_valid;
@@ -51,16 +43,15 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
     output logic [WIDTH_OUTPUT_MEM-1:0] rd_addr, wr_addr;
     output logic wr_en_x_g1_0, wr_en_x_g1_1, wr_en_x_g1_2, wr_en_x_g1_3, wr_en_x_g1_4, wr_en_x_g1_5, wr_en_x_g1_6, wr_en_x_g1_7;
     output logic wr_en_w_g1_0, wr_en_w_g1_1, wr_en_w_g1_2, wr_en_w_g1_3, wr_en_w_g1_4, wr_en_w_g1_5, wr_en_w_g1_6, wr_en_w_g1_7;
-    output logic clear_acc, clear_pipeline_multiplier, clear_reg, en_adders, clear_adders, en_acc, en_pipeline_reg, enable_mult;    
+    output logic clear_pipeline_multiplier, enable_mult;    
 
-    logic countMemState;        //State that keeps track of weather the counter is outputting addresses for the matrix memory or the vector memory.     
-    logic operationState;   //0 -> writing state, 1 -> reading state
-    logic valid_out_internal;
+    logic countMemState;                                        //0 -> state that tells we are writing to matrix, 1 -> state that tells we are writing to vector     
+    logic operationState;                                       //0 -> writing state, 1 -> reading/execution state 
+    logic valid_out_internal;                                   //Buffer should know when to store the valid values
 
-    logic clear_cntrMem, enable_cntrWriteMem;        //Counter that handles (produces addresses) to write to both memories
-    logic clear_cntrMac, enable_cntrMac;             //Counter that handles delay in MAC arithmetic for output_valid signals just for initial stages until the pipeline if full
-    //logic clear_cntrMemX, enable_cntrReadMem_X;      //Counter that handles (produces addresses) to read from vector memory (X)
-    logic clear_cntrWriteMemW, enable_cntrWriteMem_W;      //Counter that handles (produces addresses) to read from matrix memory (W)
+    logic clear_cntrMem, enable_cntrWriteMem;                   //Counter that handles (produces addresses) to write to both memories
+    logic clear_cntrMac, enable_cntrMac;                        //Counter that handles delay in MAC arithmetic for output_valid signals just for initial stages until the pipeline if full
+    logic clear_cntrWriteMemW, enable_cntrWriteMem_W;           //Counter that handles (produces addresses) to read from matrix memory (W)
     logic clear_cntrMemBank, enable_cntrMemBank;
     logic clear_cntrOutputBufferWrite, enable_cntrOutputBufferWrite;
     logic clear_cntrOutputBufferRead, enable_cntrOutputBufferRead;
@@ -78,82 +69,10 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
     always_ff @( posedge clk ) begin
         if(reset) begin
             output_valid <= 0;
-            enable_mult <= 0;
-            en_acc <= 0;
-            en_pipeline_reg <= 0;
-
-            //new
             countMemState <= 0;
             operationState <= 0;
-            //new
-            
         end
 
-        // if(countOutputBufferWriteOut == countOutputBufferReadOut - 1) begin
-        //     buffer_ready <= 0;
-        // end
-        // else begin
-        //     buffer_ready <= 1;
-        // end
-
-        // if(countOutputBufferWriteOut == countOutputBufferReadOut + 1 && countOutputBufferWriteOut == countOutputBufferReadOut) begin
-        //     output_valid <= 0;
-        // end
-        // else if(countOutputBufferWriteOut > 0) begin
-        //     output_valid <= 1;
-        // end
-
-
-        // if(countMacOut == delay_pipeline_n) begin
-        //     valid_out_internal <= 1;
-        // end
-
-        // if((countMacOut == (delay_pipeline_n + matrixSize))) begin     //matrixSize is the offset of the final output of the matrix-vector product
-        //     valid_out_internal <= 0;
-        //     operationState <= 0;
-        // end
-
-        
-
-        // // if((countMacOut == (delay_pipeline_n + 0 * matrixSize) || countMacOut == (delay_pipeline_n + 1 * matrixSize) || countMacOut == (delay_pipeline_n + 2 * matrixSize) || 
-        // //     countMacOut == (delay_pipeline_n + 3 * matrixSize) || countMacOut == (delay_pipeline_n + 4 * matrixSize) || countMacOut == (delay_pipeline_n + 5 * matrixSize) || 
-        // //     countMacOut == (delay_pipeline_n + 6 * matrixSize) || countMacOut == (delay_pipeline_n + 7 * matrixSize)) && ~clear_acc) begin
-            
-        // //     output_valid <= 1;
-        // //     enable_mult <= 0;
-        // //     en_acc <= 0;
-        // //     en_pipeline_reg <= 0;
-        // // end
-        
-        // // if(countMacOut == enable_pipeline_reg_after_initial_delay) begin
-        // //     en_pipeline_reg <= 1;
-        // // end
-
-        // // if(countMacOut == enable_acc_after_initial_delay) begin
-        // //     en_acc <= 1;
-        // // end       
-        
-
-        // // if(clear_acc && countMacOut != (delay_pipeline_n + 7 * matrixSize)) begin
-        // //     enable_mult <= 1;
-        // //     en_acc <= 1;
-        // //     en_pipeline_reg <= 1;
-
-        // // end
-
-        // if(~operationState) begin
-        //     enable_mult <= 0;
-        //     en_acc <= 0;
-        //     en_pipeline_reg <= 0;
-        // end
-
-        // if(output_valid && output_ready) begin
-
-        //     // clear_acc <= 1;
-        //     // output_valid <= 0;
-        // end
-        // else 
-        //     clear_acc <= 0;
 
         if((countOutputBufferWriteOut == countOutputBufferReadOut + 6'b1 && output_valid && output_ready) || countOutputBufferWriteOut == countOutputBufferReadOut) begin
             output_valid <= 0;
@@ -162,32 +81,21 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
             output_valid <= 1;
         end
 
-        //code from the below ff
         if(~operationState) begin
-            // addr_w <= countWriteMem_W_Out;
-            // addr_x <= countMem_X_Out;
             if(new_matrix || ~new_matrix)
                 input_ready <= 1;
-            //clear_cntrMem <= 0;
-            //clear_cntrMemX <= 0;
             clear_cntrWriteMemW <= 0;
-            en_adders <= 0;
 
             if(input_valid) begin
                 if(~countMemState && countWriteMem_W_Out == 7 && countMemBankOut == 7) begin
-                    //input_ready <= 0;
-                    //clear_cntrMem <= 1;
                     countMemState <= 1;
                 end
                 else if(countMemState && countMemBankOut == 7) begin
                     input_ready <= 0;
-                    //clearcntmem <= 0;
                     countMemState <= 0;
                     operationState <= 1;
-                    //clear_cntrMemX <= 1;
                     clear_cntrWriteMemW <= 1;
                     clear_cntrMac <= 1;
-                    enable_mult <= 1;
                 end
             end
             
@@ -201,27 +109,9 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
             
         end
         else if(operationState) begin
-            // addr_x = countMem_X_Out;
-            // addr_w = countWriteMem_W_Out;
-            //clear_cntrMemX <= (countMem_X_Out == 1) ? 1 : 0;
             clear_cntrWriteMemW <= 0;
             clear_cntrMac <= 0;
-            clear_reg <= 0;
             clear_pipeline_multiplier <= 0;
-
-            enable_mult <= 1;
-            en_pipeline_reg <= 1;
-            en_adders <= 1;
-
-            // if(countMacOut == (delay_pipeline_n + 7 * matrixSize)) begin
-            //     clear_reg <= 1;
-            //     clear_pipeline_multiplier <= 1;
-            //     if(clear_acc) begin
-            //         clear_cntrMac <= 1;
-            //         clear_cntrWriteMemW <= 1;
-            //         operationState <= 0;
-            //     end
-            // end
 
             if(countOutputBufferWriteOut == countOutputBufferReadOut - 1) begin
                 buffer_ready <= 0;
@@ -229,13 +119,6 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
             else begin
                 buffer_ready <= 1;
             end
-
-            // if(countOutputBufferWriteOut == countOutputBufferReadOut + 1 || countOutputBufferWriteOut == countOutputBufferReadOut) begin
-            //     output_valid <= 0;
-            // end
-            // else if(countOutputBufferWriteOut > 0) begin
-            //     output_valid <= 1;
-            // end
 
 
             if(countMacOut == delay_pipeline_n) begin
@@ -246,67 +129,17 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
                 valid_out_internal <= 0;
                 operationState <= 0;
                 clear_cntrWriteMemW <= 1;
-                //clear_cntrMac <= 1;
             end
 
-        
-
-        // if((countMacOut == (delay_pipeline_n + 0 * matrixSize) || countMacOut == (delay_pipeline_n + 1 * matrixSize) || countMacOut == (delay_pipeline_n + 2 * matrixSize) || 
-        //     countMacOut == (delay_pipeline_n + 3 * matrixSize) || countMacOut == (delay_pipeline_n + 4 * matrixSize) || countMacOut == (delay_pipeline_n + 5 * matrixSize) || 
-        //     countMacOut == (delay_pipeline_n + 6 * matrixSize) || countMacOut == (delay_pipeline_n + 7 * matrixSize)) && ~clear_acc) begin
-            
-        //     output_valid <= 1;
-        //     enable_mult <= 0;
-        //     en_acc <= 0;
-        //     en_pipeline_reg <= 0;
-        // end
-        
-        // if(countMacOut == enable_pipeline_reg_after_initial_delay) begin
-        //     en_pipeline_reg <= 1;
-        // end
-
-        // if(countMacOut == enable_acc_after_initial_delay) begin
-        //     en_acc <= 1;
-        // end       
-        
-
-        // if(clear_acc && countMacOut != (delay_pipeline_n + 7 * matrixSize)) begin
-        //     enable_mult <= 1;
-        //     en_acc <= 1;
-        //     en_pipeline_reg <= 1;
-
-        // end
-
-        if(~operationState) begin
-            enable_mult <= 0;
-            en_acc <= 0;
-            en_pipeline_reg <= 0;
-        end
-
-        if(output_valid && output_ready) begin
-
-            // clear_acc <= 1;
-            // output_valid <= 0;
-        end
-        else 
-            clear_acc <= 0;
-            
-            
-
-            // if(countMacOut == (matrixSize * matrixSize) - 1)
-            //     clear_cntrWriteMemW <= 1;
         end
         
     end
 
 
     always_comb begin
-        //enable_cntrWriteMem = input_ready;
         addr_w = countWriteMem_W_Out;
         rd_addr = countOutputBufferReadOut;
         wr_addr = countOutputBufferWriteOut;
-        //output_valid = 0;
-        //addr_x = countMem_X_Out;
         wr_en_x_g1_0 = 0; 
         wr_en_x_g1_1 = 0;
         wr_en_x_g1_2 = 0;
@@ -325,7 +158,6 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
         wr_en_w_g1_6 = 0; 
         wr_en_w_g1_7 = 0;
 
-        //enable_cntrReadMem_X = 0;
         enable_cntrWriteMem_W = 0;
         enable_cntrMac = 0;
         enable_cntrMemBank = 0;
@@ -336,36 +168,10 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
             enable_cntrOutputBufferRead = 0;
         end
 
-        
-        // if(reset || (countOutputBufferWriteOut - 1 == countOutputBufferReadOut && output_valid && output_ready) || countOutputBufferWriteOut == countOutputBufferReadOut) begin
-        //     output_valid = 0;
-        // end
-        // else if(countOutputBufferWriteOut > 0) begin
-        //     output_valid = 1;
-        // end
 
         if(operationState) begin    //read mode
-
-            
-            //enable_cntrReadMem_X = (countMem_X_Out == (matrixSize * matrixSize) - 1) ? 0 : ~output_valid;;
             enable_cntrWriteMem_W = (countWriteMem_W_Out == (matrixSize) - 1) ? 0 : 1;
             enable_cntrMac = 1;
-            //enable_cntrOutputBufferWrite = wr_en_buff;
-
-            // if((countMacOut == (delay_pipeline_n + 0 * matrixSize) || countMacOut == (delay_pipeline_n + 1 * matrixSize) || countMacOut == (delay_pipeline_n + 2 * matrixSize) || 
-            // countMacOut == (delay_pipeline_n + 3 * matrixSize) || countMacOut == (delay_pipeline_n + 4 * matrixSize) || countMacOut == (delay_pipeline_n + 5 * matrixSize) || 
-            // countMacOut == (delay_pipeline_n + 6 * matrixSize) || countMacOut == (delay_pipeline_n + 7 * matrixSize)) && ~clear_acc) begin
-
-            //     //enable_cntrReadMem_X = 0;
-            //     enable_cntrWriteMem_W = 0;
-            //     enable_cntrMac = 0;
-
-            // end
-
-            
-
-            
-
 
             if(buffer_ready && valid_out_internal) begin
                 wr_en_buff = 1;
@@ -375,37 +181,15 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
                 wr_en_buff = 0;
                 enable_cntrOutputBufferWrite = 0;
             end
-
-            //clear_cntrMemX = (countMem_X_Out == 7) && (enable_cntrReadMem_X) ? 1 : 0;
-
-            // if(countMacOut == 11) begin
-            //     clear_cntrMemX = 1;
-            // end
-            // else begin
-            //     clear_cntrMemX = 0;
-            // end
-            
         end
+
         else begin              //write mode
             
             enable_cntrMac = 0;
             wr_en_buff = 0;
             enable_cntrOutputBufferWrite = 0;
             
-            
-            //clear_cntrMemX = 0;
-            //wr_en_w = 0;
-            // if(countMem_X_Out == 3)
-            //     clear_cntrMemX = 1;
-            // else
-            //     clear_cntrMemX = 0;
-            
-            //clear_cntrMemX = (countMem_X_Out == 7) || (countMacOut == (delay_pipeline_n + 7 * matrixSize) + 1) ? 1 : 0;
-
-
-
             if((~countMemState && ~input_valid) || (countMemState && ~input_valid)) begin
-                //enable_cntrReadMem_X = input_valid;
                 enable_cntrWriteMem_W = input_valid;
                 enable_cntrMemBank = input_valid;
 
@@ -430,8 +214,6 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
             end
 
             if(~countMemState && input_valid) begin
-                //enable_cntrReadMem_X = 0;
-                //enable_cntrWriteMem_W = input_ready;
                 enable_cntrMemBank = input_ready;
 
                 if(countMemBankOut == 7)
@@ -533,7 +315,6 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
                 
             end
             else if(countMemState && input_valid) begin
-                //enable_cntrReadMem_X = input_ready;
                 enable_cntrWriteMem_W = 0;
                 enable_cntrMemBank = input_ready;
 
@@ -636,38 +417,33 @@ module Controller(clk, reset, input_valid, new_matrix, output_ready, addr_x,
             
     end
 
-    //Counter #(4) cntrMem (clk, reset, clear_cntrMem, enable_cntrWriteMem, countMemOut);
-    Counter #(WIDTH_MEM_BANK_CNTR) cntrMemBank(clk, reset, clear_cntrMemBank, enable_cntrMemBank, countMemBankOut);
-    Counter #(WIDTH_MAC) cntrMac (clk, reset, clear_cntrMac, enable_cntrMac, countMacOut);
-    //Counter #(WIDTH_MEM_READ_X) cntrMemX (clk, reset, clear_cntrMemX, enable_cntrReadMem_X, countMem_X_Out);
-    Counter #(WIDTH_MEM_READ_W) cntrWriteMemW (clk, reset, clear_cntrWriteMemW, enable_cntrWriteMem_W, countWriteMem_W_Out);
-   // Counter #(WIDTH_MEM_READ_W) cntrReadMemW (clk, reset, clear_cntrReadMemW, enable_cntrWriteMem_W, cntrReadMem_W_Out);
-    Counter #(6) cntrOutputBufferWrite(clk, reset, clear_cntrOutputBufferWrite, enable_cntrOutputBufferWrite, countOutputBufferWriteOut);
-    Counter #(6) cntrOutputBufferRead(clk, reset, clear_cntrOutputBufferRead, enable_cntrOutputBufferRead, countOutputBufferReadOut);
+    Counter #(WIDTH_MEM_BANK_CNTR) cntrMemBank(clk, reset, clear_cntrMemBank, enable_cntrMemBank, countMemBankOut);                         //Counter that selects between different memory "banks" to add data for parallelism
+    Counter #(WIDTH_MAC) cntrMac (clk, reset, clear_cntrMac, enable_cntrMac, countMacOut);                                                  //Counter that tracks execution delays and outpu_valid delays
+    Counter #(WIDTH_MEM_READ_W) cntrWriteMemW (clk, reset, clear_cntrWriteMemW, enable_cntrWriteMem_W, countWriteMem_W_Out);                //Address counter for reading and writing to matrix memories
+    Counter #(6) cntrOutputBufferWrite(clk, reset, clear_cntrOutputBufferWrite, enable_cntrOutputBufferWrite, countOutputBufferWriteOut);   //Address counter that writes to the output buffer
+    Counter #(6) cntrOutputBufferRead(clk, reset, clear_cntrOutputBufferRead, enable_cntrOutputBufferRead, countOutputBufferReadOut);       //Address counter that reads and gives the output from the output buffer.
 
 endmodule
 
 
 
 module matvec8_part4(clk, reset, input_valid, input_ready, input_data, new_matrix, output_valid, output_ready, output_data);
-    parameter SIZE_X = 2;   //changed
-    parameter SIZE_W = 8;  //changed
+    parameter SIZE_X = 2;   
+    parameter SIZE_W = 8;  
     parameter SIZE_OUTPUT_MEM = 64;
     parameter WIDTH = 14;
     parameter WIDTH_OUTPUT_BUFFER = 28;
-    parameter pipelineStages = 8;
-    parameter matrixSize = 8;       //Number of columns
-    parameter d0 = 4;       //Base delay(including the pipeline register) when multiplier pipeline stages is 0. changed
+    parameter pipelineStages = 5;
+    parameter matrixSize = 8;                                   //Number of columns
+    parameter d0 = 3;                                           //Base delay(including the pipeline register) when multiplier pipeline stages is 0. changed
 
-    parameter WIDTH_MEM_READ_X = $clog2(SIZE_X);         //Size of counter that writes to memory and reads from memory X (cntrMemX).
-    parameter WIDTH_MEM_READ_W = $clog2(SIZE_W);           //Size of counter that writes to memory and reads from memory W (cntrWriteMemW).
-    parameter WIDTH_MAC = 7;
+    parameter WIDTH_MEM_READ_X = $clog2(SIZE_X);                //Width of counter that writes to memory and reads from memory X (cntrMemX).
+    parameter WIDTH_MEM_READ_W = $clog2(SIZE_W);                //Width of counter that writes to memory and reads from memory W (cntrMemW).
+    parameter WIDTH_MAC = 7;                                    //Width of counter that calculates execution delay
     parameter WIDTH_MEM_BANK_CNTR = $clog2(SIZE_W);
     parameter WIDTH_OUTPUT_MEM = $clog2(SIZE_OUTPUT_MEM);
 
-    localparam delay_pipeline_n = d0 + pipelineStages - 1;
-    localparam enable_pipeline_reg_after_initial_delay = pipelineStages - 1;
-    localparam enable_acc_after_initial_delay = enable_pipeline_reg_after_initial_delay + 1;
+    localparam delay_pipeline_n = d0 + pipelineStages;
 
     localparam ADDR_X_SIZE = $clog2(SIZE_X);
     localparam ADDR_W_SIZE = $clog2(SIZE_W);
@@ -688,28 +464,21 @@ module matvec8_part4(clk, reset, input_valid, input_ready, input_data, new_matri
     logic wr_en_w_g1_0, wr_en_w_g1_1, wr_en_w_g1_2, wr_en_w_g1_3, wr_en_w_g1_4, wr_en_w_g1_5, wr_en_w_g1_6, wr_en_w_g1_7;
     logic wr_en_w_g2_0, wr_en_w_g2_1, wr_en_w_g2_2, wr_en_w_g2_3, wr_en_w_g2_4, wr_en_w_g2_5, wr_en_w_g2_6, wr_en_w_g2_7;
 
-    logic clear_acc, en_adders, en_acc, clear_adders, clear_pipeline_multiplier, clear_reg, en_pipeline_reg, enable_mult;
+    logic clear_pipeline_multiplier, enable_mult;
 
     logic signed [27:0] mac_out_0, mac_out_1, mac_out_2, mac_out_3, mac_out_4, mac_out_5, mac_out_6, mac_out_7;
     logic signed [27:0] mac_out_final;
 
     logic [WIDTH_OUTPUT_MEM-1:0] rd_addr, wr_addr;
-    logic wr_en_buff, rd_en_buff;
+    logic wr_en_buff;
 
     output logic signed [27:0] output_data;
     output logic output_valid, input_ready;
 
-    logic vecMemWriteGroup, matMemWriteGroup;
-    logic vecMemExecGroup, matMemExecGroup;
-    logic stall;
-
-    Controller #(ADDR_X_SIZE, ADDR_W_SIZE, WIDTH_MEM_READ_X, WIDTH_MEM_READ_W, WIDTH_MAC, WIDTH_MEM_BANK_CNTR, WIDTH_OUTPUT_MEM, matrixSize, delay_pipeline_n, pipelineStages, enable_pipeline_reg_after_initial_delay, enable_acc_after_initial_delay) controller(clk, reset, input_valid, new_matrix, output_ready, addr_x, 
-    wr_en_x_g1_0, wr_en_x_g1_1, wr_en_x_g1_2, wr_en_x_g1_3, wr_en_x_g1_4, wr_en_x_g1_5, wr_en_x_g1_6, wr_en_x_g1_7,
-    // wr_en_x_g2_0, wr_en_x_g2_1, wr_en_x_g2_2, wr_en_x_g2_3, wr_en_x_g2_4, wr_en_x_g2_5, wr_en_x_g2_6, wr_en_x_g2_7, 
-    addr_w, 
-    wr_en_w_g1_0, wr_en_w_g1_1, wr_en_w_g1_2, wr_en_w_g1_3, wr_en_w_g1_4, wr_en_w_g1_5, wr_en_w_g1_6, wr_en_w_g1_7, wr_en_buff, rd_addr, wr_addr, 
-    // wr_en_w_g2_0, wr_en_w_g2_1, wr_en_w_g2_2, wr_en_w_g2_3, wr_en_w_g2_4, wr_en_w_g2_5, wr_en_w_g2_6, wr_en_w_g2_7, 
-    clear_pipeline_multiplier, clear_acc, clear_reg, en_adders, clear_adders, en_acc, en_pipeline_reg, enable_mult, input_ready, output_valid, output_data);
+    Controller #(ADDR_X_SIZE, ADDR_W_SIZE, WIDTH_MEM_READ_X, WIDTH_MEM_READ_W, WIDTH_MAC, WIDTH_MEM_BANK_CNTR, WIDTH_OUTPUT_MEM, matrixSize, delay_pipeline_n, pipelineStages) controller(clk, reset, input_valid, new_matrix, output_ready, addr_x, 
+    wr_en_x_g1_0, wr_en_x_g1_1, wr_en_x_g1_2, wr_en_x_g1_3, wr_en_x_g1_4, wr_en_x_g1_5, wr_en_x_g1_6, wr_en_x_g1_7, addr_w, 
+    wr_en_w_g1_0, wr_en_w_g1_1, wr_en_w_g1_2, wr_en_w_g1_3, wr_en_w_g1_4, wr_en_w_g1_5, wr_en_w_g1_6, wr_en_w_g1_7, wr_en_buff, rd_addr, wr_addr,
+    clear_pipeline_multiplier, enable_mult, input_ready, output_valid, output_data);
 
     //Memory Group 1
     memory #(WIDTH, SIZE_X) vectorMemG1_0(clk, input_data, vectorMemG1_0_data_out, 1'b0, wr_en_x_g1_0 );
@@ -731,37 +500,17 @@ module matvec8_part4(clk, reset, input_valid, input_ready, input_data, new_matri
     memory #(WIDTH, SIZE_W) matrixMemG1_7(clk, input_data, matrixMemG1_7_data_out, addr_w, wr_en_w_g1_7);
 
 
-
-    //Memory Group 2
-    // memory #(WIDTH, SIZE_X) vectorMemG2_0(clk, input_data, vectorMemG2_0_data_out, 1'b0, wr_en_x_g2_0);
-    // memory #(WIDTH, SIZE_X) vectorMemG2_1(clk, input_data, vectorMemG2_1_data_out, 1'b0, wr_en_x_g2_1);
-    // memory #(WIDTH, SIZE_X) vectorMemG2_2(clk, input_data, vectorMemG2_2_data_out, 1'b0, wr_en_x_g2_2);
-    // memory #(WIDTH, SIZE_X) vectorMemG2_3(clk, input_data, vectorMemG2_3_data_out, 1'b0, wr_en_x_g2_3);
-    // memory #(WIDTH, SIZE_X) vectorMemG2_4(clk, input_data, vectorMemG2_4_data_out, 1'b0, wr_en_x_g2_4);
-    // memory #(WIDTH, SIZE_X) vectorMemG2_5(clk, input_data, vectorMemG2_5_data_out, 1'b0, wr_en_x_g2_5);
-    // memory #(WIDTH, SIZE_X) vectorMemG2_6(clk, input_data, vectorMemG2_6_data_out, 1'b0, wr_en_x_g2_6);
-    // memory #(WIDTH, SIZE_X) vectorMemG2_7(clk, input_data, vectorMemG2_7_data_out, 1'b0, wr_en_x_g2_7);
-
-    // memory #(WIDTH, SIZE_W) matrixMemG2_0(clk, input_data, matrixMemG2_0_data_out, addr_w, wr_en_w_g2_0);
-    // memory #(WIDTH, SIZE_W) matrixMemG2_1(clk, input_data, matrixMemG2_1_data_out, addr_w, wr_en_w_g2_1);
-    // memory #(WIDTH, SIZE_W) matrixMemG2_2(clk, input_data, matrixMemG2_2_data_out, addr_w, wr_en_w_g2_2);
-    // memory #(WIDTH, SIZE_W) matrixMemG2_3(clk, input_data, matrixMemG2_3_data_out, addr_w, wr_en_w_g2_3);
-    // memory #(WIDTH, SIZE_W) matrixMemG2_4(clk, input_data, matrixMemG2_4_data_out, addr_w, wr_en_w_g2_4);
-    // memory #(WIDTH, SIZE_W) matrixMemG2_5(clk, input_data, matrixMemG2_5_data_out, addr_w, wr_en_w_g2_5);
-    // memory #(WIDTH, SIZE_W) matrixMemG2_6(clk, input_data, matrixMemG2_6_data_out, addr_w, wr_en_w_g2_6);
-    // memory #(WIDTH, SIZE_W) matrixMemG2_7(clk, input_data, matrixMemG2_7_data_out, addr_w, wr_en_w_g2_7);
-
-    mac_part4 #(pipelineStages, WIDTH) macUnit_0(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_multiplier, vectorMemG1_0_data_out, matrixMemG1_0_data_out, mac_out_0);
-    mac_part4 #(pipelineStages, WIDTH) macUnit_1(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_multiplier, vectorMemG1_1_data_out, matrixMemG1_1_data_out, mac_out_1);
-    mac_part4 #(pipelineStages, WIDTH) macUnit_2(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_multiplier, vectorMemG1_2_data_out, matrixMemG1_2_data_out, mac_out_2);
-    mac_part4 #(pipelineStages, WIDTH) macUnit_3(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_multiplier, vectorMemG1_3_data_out, matrixMemG1_3_data_out, mac_out_3);
-    mac_part4 #(pipelineStages, WIDTH) macUnit_4(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_multiplier, vectorMemG1_4_data_out, matrixMemG1_4_data_out, mac_out_4);
-    mac_part4 #(pipelineStages, WIDTH) macUnit_5(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_multiplier, vectorMemG1_5_data_out, matrixMemG1_5_data_out, mac_out_5);
-    mac_part4 #(pipelineStages, WIDTH) macUnit_6(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_multiplier, vectorMemG1_6_data_out, matrixMemG1_6_data_out, mac_out_6);
-    mac_part4 #(pipelineStages, WIDTH) macUnit_7(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_multiplier, vectorMemG1_7_data_out, matrixMemG1_7_data_out, mac_out_7);
+    mac_part4 #(pipelineStages, WIDTH) macUnit_0(clk, reset, 1'b1, clear_pipeline_multiplier, vectorMemG1_0_data_out, matrixMemG1_0_data_out, mac_out_0);
+    mac_part4 #(pipelineStages, WIDTH) macUnit_1(clk, reset, 1'b1, clear_pipeline_multiplier, vectorMemG1_1_data_out, matrixMemG1_1_data_out, mac_out_1);
+    mac_part4 #(pipelineStages, WIDTH) macUnit_2(clk, reset, 1'b1, clear_pipeline_multiplier, vectorMemG1_2_data_out, matrixMemG1_2_data_out, mac_out_2);
+    mac_part4 #(pipelineStages, WIDTH) macUnit_3(clk, reset, 1'b1, clear_pipeline_multiplier, vectorMemG1_3_data_out, matrixMemG1_3_data_out, mac_out_3);
+    mac_part4 #(pipelineStages, WIDTH) macUnit_4(clk, reset, 1'b1, clear_pipeline_multiplier, vectorMemG1_4_data_out, matrixMemG1_4_data_out, mac_out_4);
+    mac_part4 #(pipelineStages, WIDTH) macUnit_5(clk, reset, 1'b1, clear_pipeline_multiplier, vectorMemG1_5_data_out, matrixMemG1_5_data_out, mac_out_5);
+    mac_part4 #(pipelineStages, WIDTH) macUnit_6(clk, reset, 1'b1, clear_pipeline_multiplier, vectorMemG1_6_data_out, matrixMemG1_6_data_out, mac_out_6);
+    mac_part4 #(pipelineStages, WIDTH) macUnit_7(clk, reset, 1'b1, clear_pipeline_multiplier, vectorMemG1_7_data_out, matrixMemG1_7_data_out, mac_out_7);
     
-    pipelined_adders pipelined_adders(clk, reset, en_adders, clear_adders, mac_out_0, mac_out_1, mac_out_2, mac_out_3, mac_out_4, mac_out_5, mac_out_6, mac_out_7, mac_out_final);
+    pipelined_adders pipelined_adders(clk, reset, mac_out_0, mac_out_1, mac_out_2, mac_out_3, mac_out_4, mac_out_5, mac_out_6, mac_out_7, mac_out_final);
 
-    output_memory #(WIDTH_OUTPUT_BUFFER, SIZE_OUTPUT_MEM) output_buffer(clk, mac_out_final, output_data, wr_addr, rd_addr, wr_en_buff, rd_en_buff);
+    output_memory #(WIDTH_OUTPUT_BUFFER, SIZE_OUTPUT_MEM) output_buffer(clk, mac_out_final, output_data, wr_addr, rd_addr, wr_en_buff);
 
 endmodule

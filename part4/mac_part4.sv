@@ -1,24 +1,22 @@
 
-module D_FF_PipelineReg_28b(regProdIn, regProdOut, clk, reset, clear_reg, en_pipeline_reg); //Register used for pipelining
+module D_FF_PipelineReg_28b(regProdIn, regProdOut, clk, reset); //Register used for pipelining
     input signed [27:0] regProdIn;
-    input clk, reset, clear_reg, en_pipeline_reg;
+    input clk, reset;
     output logic signed [27:0] regProdOut;
     always_ff @(posedge clk) begin
-        if (reset == 1 || clear_reg)
+        if (reset)
             regProdOut <= 0;
-        else if(en_pipeline_reg)
+        else
             regProdOut <= regProdIn;
 
     end
 endmodule
 
-module mac_part4(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_mult, a, b, pipelinedRegOut);
-    input clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, clear_reg, clear_pipeline_mult;
+module mac_part4(clk, reset, enable_mult, clear_pipeline_mult, a, b, pipelinedRegOut);
+    input clk, reset, enable_mult, clear_pipeline_mult;
     input signed [13:0] a, b;
 
     output logic signed [27:0] pipelinedRegOut;
-    //logic signed [27:0] mac_out_0, mac_out_1, mac_out_2, mac_out_3, mac_out_4, mac_out_5, mac_out_7;
-    // logic signed [27:0] sum_lvl1_1, sum_lvl1_2, sum_lvl1_3, sum_lvl1_4, sum_lvl2_1, sum_lvl2_2, sum_lvl3_1; 
     logic clr_rst_mpx;
     logic signed [27:0] pipelinedMultOut;
 
@@ -30,8 +28,7 @@ module mac_part4(clk, reset, en_acc, en_pipeline_reg, enable_mult, clear_acc, cl
     end
 
     DW_mult_pipe #(WIDTH, WIDTH, multPipelinedStages, 1, 2) pipelinedMultiplier(clk, ~clr_rst_mpx, enable_mult, 1'b1, a, b, pipelinedMultOut);
-    D_FF_PipelineReg_28b pipelineReg(pipelinedMultOut, pipelinedRegOut, clk, reset, clear_reg, en_pipeline_reg);
+    D_FF_PipelineReg_28b pipelineReg(pipelinedMultOut, pipelinedRegOut, clk, reset);
     
-    //D_FF_28b D_FF_28b(sum, f, clk, en_acc, clear_acc, reset, count);
 
 endmodule
