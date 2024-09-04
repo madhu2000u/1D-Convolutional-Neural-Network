@@ -1,0 +1,1100 @@
+
+                           Design Compiler Graphical 
+                                 DC Ultra (TM)
+                                  DFTMAX (TM)
+                              Power Compiler (TM)
+                                 DesignWare (R)
+                                 DC Expert (TM)
+                               Design Vision (TM)
+                               HDL Compiler (TM)
+                               VHDL Compiler (TM)
+                                  DFT Compiler
+                               Design Compiler(R)
+
+              Version S-2021.06-SP5-4 for linux64 - Aug 05, 2022 
+
+                    Copyright (c) 1988 - 2022 Synopsys, Inc.
+   This software and the associated documentation are proprietary to Synopsys,
+ Inc. This software may only be used in accordance with the terms and conditions
+ of a written license agreement with Synopsys, Inc. All other use, reproduction,
+   or distribution of this software is strictly prohibited.  Licensed Products
+     communicate with Synopsys servers for the purpose of providing software
+    updates, detecting software piracy and verifying that customers are using
+    Licensed Products in conformity with the applicable License Key for such
+  Licensed Products. Synopsys will use information gathered in connection with
+    this process to deliver software updates and pursue software pirates and
+                                   infringers.
+
+ Inclusivity & Diversity - Visit SolvNetPlus to read the "Synopsys Statement on
+            Inclusivity and Diversity" (Refer to article 000036315 at
+                        https://solvnetplus.synopsys.com)
+Initializing...
+##############################################
+# Setup: fill out the following parameters: name of clock signal, clock period (ns),
+# reset signal name (if used), name of top-level module, name of source file
+set CLK_NAME "clk";
+clk
+set CLK_PERIOD 0.735;
+0.735
+set RST_NAME "reset";
+reset
+set TOP_MOD_NAME "matvec8_part4";
+matvec8_part4
+set SRC_FILE [list "matvec8_part4.sv" "memory.sv" "mac_part4.sv" "output_memory.sv" "pipelined_adders.sv"];
+matvec8_part4.sv memory.sv mac_part4.sv output_memory.sv pipelined_adders.sv
+# If you have multiple source files, change the line above to list them all like this:
+# set SRC_FILE [list "file1.sv" "file2.sv"];
+###############################################
+source setupdc.tcl
+NangateOpenCellLibrary_typical.db dw_foundation.sldb
+file mkdir work_synth
+# optimize FSMs
+set fsm_auto_inferring "true"; 
+true
+set fsm_enable_state_minimization "true";
+true
+define_design_lib WORK -path work_synth
+1
+analyze $SRC_FILE -format sverilog
+Running PRESTO HDLC
+Compiling source file ./matvec8_part4.sv
+Compiling source file ./memory.sv
+Compiling source file ./mac_part4.sv
+Compiling source file ./output_memory.sv
+Compiling source file ./pipelined_adders.sv
+Presto compilation completed successfully.
+Loading db file '/home/home4/pmilder/ese507/synthesis/lib/NangateOpenCellLibrary_typical.db'
+Loading db file '/usr/local/synopsys/syn/S-2021.06-SP5-4/libraries/syn/dw_foundation.sldb'
+1
+elaborate -work WORK $TOP_MOD_NAME
+Loading db file '/usr/local/synopsys/syn/S-2021.06-SP5-4/libraries/syn/gtech.db'
+Loading db file '/usr/local/synopsys/syn/S-2021.06-SP5-4/libraries/syn/standard.sldb'
+  Loading link library 'NangateOpenCellLibrary'
+  Loading link library 'gtech'
+Running PRESTO HDLC
+Presto compilation completed successfully. (matvec8_part4)
+Elaborated 1 design.
+Current design is now 'matvec8_part4'.
+Information: Building the design 'Controller' instantiated from design 'matvec8_part4' with
+	the parameters "1,3,1,3,7,3,6,8,11,8". (HDL-193)
+Warning:  ./matvec8_part4.sv:128: signed to unsigned conversion occurs. (VER-318)
+Warning:  ./matvec8_part4.sv:173: signed to unsigned conversion occurs. (VER-318)
+
+Statistics for case statements in always block at line 139 in file
+	'./matvec8_part4.sv'
+===============================================
+|           Line           |  full/ parallel  |
+===============================================
+|           233            |    auto/auto     |
+|           331            |    auto/auto     |
+===============================================
+
+Inferred memory devices in process
+	in routine Controller_ADDR_X_SIZE1_ADDR_W_SIZE3_WIDTH_MEM_READ_X1_WIDTH_MEM_READ_W3_WIDTH_MAC7_WIDTH_MEM_BANK_CNTR3_WIDTH_OUTPUT_MEM6_matrixSize8_delay_pipeline_n11_pipelineStages8 line 69 in file
+		'./matvec8_part4.sv'.
+=========================================================================================
+|         Register Name         |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
+=========================================================================================
+|      operationState_reg       | Flip-flop |   1   |  N  | N  | N  | N  | N  | N  | N  |
+|       output_valid_reg        | Flip-flop |   1   |  N  | N  | N  | N  | N  | N  | N  |
+|       countMemState_reg       | Flip-flop |   1   |  N  | N  | N  | N  | N  | N  | N  |
+|    valid_out_internal_reg     | Flip-flop |   1   |  N  | N  | N  | N  | N  | N  | N  |
+|        input_ready_reg        | Flip-flop |   1   |  N  | N  | N  | N  | N  | N  | N  |
+|    clear_cntrWriteMemW_reg    | Flip-flop |   1   |  N  | N  | N  | N  | N  | N  | N  |
+|       clear_cntrMac_reg       | Flip-flop |   1   |  N  | N  | N  | N  | N  | N  | N  |
+| clear_pipeline_multiplier_reg | Flip-flop |   1   |  N  | N  | N  | N  | N  | N  | N  |
+|       buffer_ready_reg        | Flip-flop |   1   |  N  | N  | N  | N  | N  | N  | N  |
+=========================================================================================
+Presto compilation completed successfully. (Controller_ADDR_X_SIZE1_ADDR_W_SIZE3_WIDTH_MEM_READ_X1_WIDTH_MEM_READ_W3_WIDTH_MAC7_WIDTH_MEM_BANK_CNTR3_WIDTH_OUTPUT_MEM6_matrixSize8_delay_pipeline_n11_pipelineStages8)
+Information: Building the design 'memory' instantiated from design 'matvec8_part4' with
+	the parameters "14,2". (HDL-193)
+
+Inferred memory devices in process
+	in routine memory_WIDTH14_SIZE2 line 12 in file
+		'./memory.sv'.
+===============================================================================
+|    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
+===============================================================================
+|    data_out_reg     | Flip-flop |  14   |  Y  | N  | N  | N  | N  | N  | N  |
+|       mem_reg       | Flip-flop |  28   |  Y  | N  | N  | N  | N  | N  | N  |
+===============================================================================
+Presto compilation completed successfully. (memory_WIDTH14_SIZE2)
+Information: Building the design 'memory' instantiated from design 'matvec8_part4' with
+	the parameters "14,8". (HDL-193)
+
+Inferred memory devices in process
+	in routine memory_WIDTH14_SIZE8 line 12 in file
+		'./memory.sv'.
+===============================================================================
+|    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
+===============================================================================
+|    data_out_reg     | Flip-flop |  14   |  Y  | N  | N  | N  | N  | N  | N  |
+|       mem_reg       | Flip-flop |  112  |  Y  | N  | N  | N  | N  | N  | N  |
+===============================================================================
+Statistics for MUX_OPs
+=============================================================
+|    block name/line      | Inputs | Outputs | # sel inputs |
+=============================================================
+| memory_WIDTH14_SIZE8/13 |   8    |   14    |      3       |
+=============================================================
+Presto compilation completed successfully. (memory_WIDTH14_SIZE8)
+Information: Building the design 'mac_part4' instantiated from design 'matvec8_part4' with
+	the parameters "8,14". (HDL-193)
+Presto compilation completed successfully. (mac_part4_multPipelinedStages8_WIDTH14)
+Information: Building the design 'pipelined_adders'. (HDL-193)
+Presto compilation completed successfully. (pipelined_adders)
+Information: Building the design 'output_memory' instantiated from design 'matvec8_part4' with
+	the parameters "28,64". (HDL-193)
+
+Inferred memory devices in process
+	in routine output_memory_WIDTH28_SIZE64 line 13 in file
+		'./output_memory.sv'.
+===============================================================================
+|    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
+===============================================================================
+|       mem_reg       | Flip-flop | 1792  |  Y  | N  | N  | N  | N  | N  | N  |
+===============================================================================
+Statistics for MUX_OPs
+=====================================================================
+|        block name/line          | Inputs | Outputs | # sel inputs |
+=====================================================================
+| output_memory_WIDTH28_SIZE64/12 |   64   |   28    |      6       |
+=====================================================================
+Presto compilation completed successfully. (output_memory_WIDTH28_SIZE64)
+Information: Building the design 'Counter' instantiated from design 'Controller_ADDR_X_SIZE1_ADDR_W_SIZE3_WIDTH_MEM_READ_X1_WIDTH_MEM_READ_W3_WIDTH_MAC7_WIDTH_MEM_BANK_CNTR3_WIDTH_OUTPUT_MEM6_matrixSize8_delay_pipeline_n11_pipelineStages8' with
+	the parameters "3". (HDL-193)
+
+Inferred memory devices in process
+	in routine Counter_WIDTH3 line 8 in file
+		'./matvec8_part4.sv'.
+===============================================================================
+|    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
+===============================================================================
+|    countOut_reg     | Flip-flop |   3   |  Y  | N  | N  | N  | N  | N  | N  |
+===============================================================================
+Presto compilation completed successfully. (Counter_WIDTH3)
+Information: Building the design 'Counter' instantiated from design 'Controller_ADDR_X_SIZE1_ADDR_W_SIZE3_WIDTH_MEM_READ_X1_WIDTH_MEM_READ_W3_WIDTH_MAC7_WIDTH_MEM_BANK_CNTR3_WIDTH_OUTPUT_MEM6_matrixSize8_delay_pipeline_n11_pipelineStages8' with
+	the parameters "7". (HDL-193)
+
+Inferred memory devices in process
+	in routine Counter_WIDTH7 line 8 in file
+		'./matvec8_part4.sv'.
+===============================================================================
+|    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
+===============================================================================
+|    countOut_reg     | Flip-flop |   7   |  Y  | N  | N  | N  | N  | N  | N  |
+===============================================================================
+Presto compilation completed successfully. (Counter_WIDTH7)
+Information: Building the design 'Counter' instantiated from design 'Controller_ADDR_X_SIZE1_ADDR_W_SIZE3_WIDTH_MEM_READ_X1_WIDTH_MEM_READ_W3_WIDTH_MAC7_WIDTH_MEM_BANK_CNTR3_WIDTH_OUTPUT_MEM6_matrixSize8_delay_pipeline_n11_pipelineStages8' with
+	the parameters "6". (HDL-193)
+
+Inferred memory devices in process
+	in routine Counter_WIDTH6 line 8 in file
+		'./matvec8_part4.sv'.
+===============================================================================
+|    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
+===============================================================================
+|    countOut_reg     | Flip-flop |   6   |  Y  | N  | N  | N  | N  | N  | N  |
+===============================================================================
+Presto compilation completed successfully. (Counter_WIDTH6)
+Information: Building the design 'D_FF_PipelineReg_28b'. (HDL-193)
+
+Inferred memory devices in process
+	in routine D_FF_PipelineReg_28b line 6 in file
+		'./mac_part4.sv'.
+===============================================================================
+|    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
+===============================================================================
+|   regProdOut_reg    | Flip-flop |  28   |  Y  | N  | N  | N  | N  | N  | N  |
+===============================================================================
+Presto compilation completed successfully. (D_FF_PipelineReg_28b)
+Information: Building the design 'saturation_adder'. (HDL-193)
+Warning:  ./pipelined_adders.sv:25: unsigned to signed assignment occurs. (VER-318)
+Warning:  ./pipelined_adders.sv:27: unsigned to signed assignment occurs. (VER-318)
+Warning:  ./pipelined_adders.sv:30: unsigned to signed assignment occurs. (VER-318)
+Presto compilation completed successfully. (saturation_adder)
+Information: Building the design 'D_FF_PipelineForAdders_28b'. (HDL-193)
+
+Inferred memory devices in process
+	in routine D_FF_PipelineForAdders_28b line 5 in file
+		'./pipelined_adders.sv'.
+===============================================================================
+|    Register Name    |   Type    | Width | Bus | MB | AR | AS | SR | SS | ST |
+===============================================================================
+|     Output_reg      | Flip-flop |  28   |  Y  | N  | N  | N  | N  | N  | N  |
+===============================================================================
+Presto compilation completed successfully. (D_FF_PipelineForAdders_28b)
+1
+###### CLOCKS AND PORTS #######
+set CLK_PORT [get_ports $CLK_NAME]
+{clk}
+set TMP1 [remove_from_collection [all_inputs] $CLK_PORT]
+{reset input_valid input_data[13] input_data[12] input_data[11] input_data[10] input_data[9] input_data[8] input_data[7] input_data[6] input_data[5] input_data[4] input_data[3] input_data[2] input_data[1] input_data[0] new_matrix output_ready}
+set INPUTS [remove_from_collection $TMP1 $RST_NAME]
+{input_valid input_data[13] input_data[12] input_data[11] input_data[10] input_data[9] input_data[8] input_data[7] input_data[6] input_data[5] input_data[4] input_data[3] input_data[2] input_data[1] input_data[0] new_matrix output_ready}
+create_clock -period $CLK_PERIOD [get_ports clk]
+1
+# set delay for inputs to be 0.2ns
+set_input_delay 0.2 -max -clock clk $INPUTS
+1
+set_output_delay 0.2 -max -clock clk [all_outputs]
+1
+###### OPTIMIZATION #######
+set_max_area 0 
+1
+###### RUN #####
+compile_ultra
+Information: Performing power optimization. (PWR-850)
+Alib files are up-to-date.
+Information: Evaluating DesignWare library utilization. (UISN-27)
+
+============================================================================
+| DesignWare Building Block Library  |         Version         | Available |
+============================================================================
+| Basic DW Building Blocks           | S-2021.06-DWBB_202106.5 |     *     |
+| Licensed DW Building Blocks        | S-2021.06-DWBB_202106.5 |     *     |
+============================================================================
+
+============================================================================
+| Flow Information                                                         |
+----------------------------------------------------------------------------
+| Flow         | Design Compiler WLM                                       |
+============================================================================
+| Design Information                                      | Value          |
+============================================================================
+| Number of Scenarios                                     | 0              |
+| Leaf Cell Count                                         | 4596           |
+| Number of User Hierarchies                              | 54             |
+| Sequential Cell Count                                   | 3590           |
+| Macro Count                                             | 0              |
+| Number of Power Domains                                 | 0              |
+| Design with UPF Data                                    | false          |
+============================================================================
+Information: Sequential output inversion is enabled.  SVF file must be used for formal verification. (OPT-1208)
+
+Information: There are 60 potential problems in your design. Please run 'check_design' for more information. (LINT-99)
+
+Information: Uniquified 8 instances of design 'memory_WIDTH14_SIZE2'. (OPT-1056)
+Information: Uniquified 8 instances of design 'memory_WIDTH14_SIZE8'. (OPT-1056)
+Information: Uniquified 8 instances of design 'mac_part4_multPipelinedStages8_WIDTH14'. (OPT-1056)
+Information: Uniquified 2 instances of design 'Counter_WIDTH3'. (OPT-1056)
+Information: Uniquified 2 instances of design 'Counter_WIDTH6'. (OPT-1056)
+Information: Uniquified 8 instances of design 'D_FF_PipelineReg_28b'. (OPT-1056)
+Information: Uniquified 7 instances of design 'saturation_adder'. (OPT-1056)
+Information: Uniquified 7 instances of design 'D_FF_PipelineForAdders_28b'. (OPT-1056)
+  Simplifying Design 'matvec8_part4'
+
+Loaded alib file './alib-52/NangateOpenCellLibrary_typical.db.alib'
+  Building model 'DW01_NAND2'
+Information: Ungrouping hierarchy controller before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy vectorMemG1_0 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy matrixMemG1_0 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_0 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy vectorMemG1_7 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy vectorMemG1_6 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy vectorMemG1_5 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy vectorMemG1_4 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy vectorMemG1_3 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy vectorMemG1_2 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy vectorMemG1_1 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy matrixMemG1_7 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy matrixMemG1_6 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy matrixMemG1_5 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy matrixMemG1_4 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy matrixMemG1_3 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy matrixMemG1_2 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy matrixMemG1_1 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_7 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_6 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_5 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_4 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_3 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_2 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_1 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy controller/cntrMemBank before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy controller/cntrMac before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy controller/cntrOutputBufferWrite before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_0/pipelineReg before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder0 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy controller/cntrWriteMemW before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy controller/cntrOutputBufferRead before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_7/pipelineReg before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_6/pipelineReg before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_5/pipelineReg before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_4/pipelineReg before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_3/pipelineReg before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_2/pipelineReg before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy macUnit_1/pipelineReg before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder6 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder5 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder4 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder3 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder2 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder1 before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder0/pipelineRegForAdders before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder6/pipelineRegForAdders before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder5/pipelineRegForAdders before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder4/pipelineRegForAdders before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder3/pipelineRegForAdders before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder2/pipelineRegForAdders before Pass 1 (OPT-776)
+Information: Ungrouping hierarchy pipelined_adders/adder1/pipelineRegForAdders before Pass 1 (OPT-776)
+Information: Ungrouping 53 of 55 hierarchies before Pass 1 (OPT-775)
+Information: State dependent leakage is now switched from on to off.
+
+  Beginning Pass 1 Mapping
+  ------------------------
+  Processing 'matvec8_part4'
+Information: Added key list 'DesignWare' to design 'matvec8_part4'. (DDB-72)
+ Implement Synthetic for 'matvec8_part4'.
+  Processing 'matvec8_part4_DW_mult_pipe_J1_0'
+  Processing 'matvec8_part4_DW_mult_pipe_J1_1'
+  Processing 'matvec8_part4_DW_mult_pipe_J1_2'
+  Processing 'matvec8_part4_DW_mult_pipe_J1_3'
+  Processing 'matvec8_part4_DW_mult_pipe_J1_4'
+  Processing 'matvec8_part4_DW_mult_pipe_J1_5'
+  Processing 'matvec8_part4_DW_mult_pipe_J1_6'
+  Processing 'matvec8_part4_DW_mult_pipe_J1_7'
+  Processing 'output_memory_WIDTH28_SIZE64'
+
+  Updating timing information
+Information: Updating design information... (UID-85)
+Information: The register 'controller/clear_pipeline_multiplier_reg' is a constant and will be removed. (OPT-1206)
+
+  Beginning Mapping Optimizations  (Ultra High effort)
+  -------------------------------
+Information: Checking pipeline property of cell macUnit_1/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_0). (RTDC-137)
+Information: cell macUnit_1/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_0) is a pipeline. (RTDC-139)
+Information: Checking pipeline property of cell macUnit_2/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_1). (RTDC-137)
+Information: cell macUnit_2/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_1) is a pipeline. (RTDC-139)
+Information: Checking pipeline property of cell macUnit_3/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_2). (RTDC-137)
+Information: cell macUnit_3/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_2) is a pipeline. (RTDC-139)
+Information: Checking pipeline property of cell macUnit_4/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_3). (RTDC-137)
+Information: cell macUnit_4/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_3) is a pipeline. (RTDC-139)
+Information: Checking pipeline property of cell macUnit_5/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_4). (RTDC-137)
+Information: cell macUnit_5/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_4) is a pipeline. (RTDC-139)
+Information: Checking pipeline property of cell macUnit_6/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_5). (RTDC-137)
+Information: cell macUnit_6/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_5) is a pipeline. (RTDC-139)
+Information: Checking pipeline property of cell macUnit_7/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_6). (RTDC-137)
+Information: cell macUnit_7/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_6) is a pipeline. (RTDC-139)
+Information: Checking pipeline property of cell macUnit_0/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_7). (RTDC-137)
+Information: cell macUnit_0/pipelinedMultiplier (design matvec8_part4_DW_mult_pipe_J1_7) is a pipeline. (RTDC-139)
+  Mapping Optimization (Phase 1)
+  Mapping Optimization (Phase 2)
+  Retiming matvec8_part4_DW_mult_pipe_J1_0 (macUnit_1/pipelinedMultiplier)
+  Preferred flip-flop is DFFS_X1 with setup = 0.04
+
+
+  Retiming base-clock clk, rising edge.
+  Beginning minimum period retiming ...
+  ... minimum period retiming done.
+  Beginning minimum area retiming step 1 ...
+  ... minimum area retiming step 1 done.
+  Beginning minimum area retiming step 2 ...
+  5% 10% 15% 20% 25% 30% 35% 40% 45% 50% 55% 60% 65% 70% 75% 80% 85% 90% 95% 100% 
+  ... minimum area retiming step 2 done.
+  Beginning minimum area retiming step 3 ...
+  10% 20% 30% 40% 50% 60% ... 100% 
+  ... minimum area retiming step 3 done.
+  Beginning final register move ...
+  ... final register move done.
+  Lower bound estimate = 0.61
+  Critical path length = 0.61
+  Clock correction = 0.13 (clock-to-Q delay = 0.09, setup = 0.04, uncertainty = 0.00)
+  Retiming matvec8_part4_DW_mult_pipe_J1_1 (macUnit_2/pipelinedMultiplier)
+  Preferred flip-flop is DFFS_X1 with setup = 0.04
+
+
+  Retiming base-clock clk, rising edge.
+  Beginning minimum period retiming ...
+  ... minimum period retiming done.
+  Beginning minimum area retiming step 1 ...
+  ... minimum area retiming step 1 done.
+  Beginning minimum area retiming step 2 ...
+  5% 10% 15% 20% 25% 30% 35% 40% 45% 50% 55% 60% 65% 70% 75% 80% 85% 90% 95% 100% 
+  ... minimum area retiming step 2 done.
+  Beginning minimum area retiming step 3 ...
+  10% 20% 30% 40% 50% 60% ... 100% 
+  ... minimum area retiming step 3 done.
+  Beginning final register move ...
+  ... final register move done.
+  Lower bound estimate = 0.61
+  Critical path length = 0.61
+  Clock correction = 0.13 (clock-to-Q delay = 0.09, setup = 0.04, uncertainty = 0.00)
+  Retiming matvec8_part4_DW_mult_pipe_J1_2 (macUnit_3/pipelinedMultiplier)
+  Preferred flip-flop is DFFS_X1 with setup = 0.04
+
+
+  Retiming base-clock clk, rising edge.
+  Beginning minimum period retiming ...
+  ... minimum period retiming done.
+  Beginning minimum area retiming step 1 ...
+  ... minimum area retiming step 1 done.
+  Beginning minimum area retiming step 2 ...
+  5% 10% 15% 20% 25% 30% 35% 40% 45% 50% 55% 60% 65% 70% 75% 80% 85% 90% 95% 100% 
+  ... minimum area retiming step 2 done.
+  Beginning minimum area retiming step 3 ...
+  10% 20% 30% 40% 50% 60% ... 100% 
+  ... minimum area retiming step 3 done.
+  Beginning final register move ...
+  ... final register move done.
+  Lower bound estimate = 0.61
+  Critical path length = 0.61
+  Clock correction = 0.13 (clock-to-Q delay = 0.09, setup = 0.04, uncertainty = 0.00)
+  Retiming matvec8_part4_DW_mult_pipe_J1_3 (macUnit_4/pipelinedMultiplier)
+  Preferred flip-flop is DFFS_X1 with setup = 0.04
+
+
+  Retiming base-clock clk, rising edge.
+  Beginning minimum period retiming ...
+  ... minimum period retiming done.
+  Beginning minimum area retiming step 1 ...
+  ... minimum area retiming step 1 done.
+  Beginning minimum area retiming step 2 ...
+  5% 10% 15% 20% 25% 30% 35% 40% 45% 50% 55% 60% 65% 70% 75% 80% 85% 90% 95% 100% 
+  ... minimum area retiming step 2 done.
+  Beginning minimum area retiming step 3 ...
+  10% 20% 30% 40% 50% 60% ... 100% 
+  ... minimum area retiming step 3 done.
+  Beginning final register move ...
+  ... final register move done.
+  Lower bound estimate = 0.61
+  Critical path length = 0.61
+  Clock correction = 0.13 (clock-to-Q delay = 0.09, setup = 0.04, uncertainty = 0.00)
+  Retiming matvec8_part4_DW_mult_pipe_J1_4 (macUnit_5/pipelinedMultiplier)
+  Preferred flip-flop is DFFS_X1 with setup = 0.04
+
+
+  Retiming base-clock clk, rising edge.
+  Beginning minimum period retiming ...
+  ... minimum period retiming done.
+  Beginning minimum area retiming step 1 ...
+  ... minimum area retiming step 1 done.
+  Beginning minimum area retiming step 2 ...
+  5% 10% 15% 20% 25% 30% 35% 40% 45% 50% 55% 60% 65% 70% 75% 80% 85% 90% 95% 100% 
+  ... minimum area retiming step 2 done.
+  Beginning minimum area retiming step 3 ...
+  10% 20% 30% 40% 50% 60% ... 100% 
+  ... minimum area retiming step 3 done.
+  Beginning final register move ...
+  ... final register move done.
+  Lower bound estimate = 0.61
+  Critical path length = 0.61
+  Clock correction = 0.13 (clock-to-Q delay = 0.09, setup = 0.04, uncertainty = 0.00)
+  Retiming matvec8_part4_DW_mult_pipe_J1_5 (macUnit_6/pipelinedMultiplier)
+  Preferred flip-flop is DFFS_X1 with setup = 0.04
+
+
+  Retiming base-clock clk, rising edge.
+  Beginning minimum period retiming ...
+  ... minimum period retiming done.
+  Beginning minimum area retiming step 1 ...
+  ... minimum area retiming step 1 done.
+  Beginning minimum area retiming step 2 ...
+  5% 10% 15% 20% 25% 30% 35% 40% 45% 50% 55% 60% 65% 70% 75% 80% 85% 90% 95% 100% 
+  ... minimum area retiming step 2 done.
+  Beginning minimum area retiming step 3 ...
+  10% 20% 30% 40% 50% 60% ... 100% 
+  ... minimum area retiming step 3 done.
+  Beginning final register move ...
+  ... final register move done.
+  Lower bound estimate = 0.61
+  Critical path length = 0.61
+  Clock correction = 0.13 (clock-to-Q delay = 0.09, setup = 0.04, uncertainty = 0.00)
+  Retiming matvec8_part4_DW_mult_pipe_J1_6 (macUnit_7/pipelinedMultiplier)
+  Preferred flip-flop is DFFS_X1 with setup = 0.04
+
+
+  Retiming base-clock clk, rising edge.
+  Beginning minimum period retiming ...
+  ... minimum period retiming done.
+  Beginning minimum area retiming step 1 ...
+  ... minimum area retiming step 1 done.
+  Beginning minimum area retiming step 2 ...
+  5% 10% 15% 20% 25% 30% 35% 40% 45% 50% 55% 60% 65% 70% 75% 80% 85% 90% 95% 100% 
+  ... minimum area retiming step 2 done.
+  Beginning minimum area retiming step 3 ...
+  10% 20% 30% 40% 50% 60% ... 100% 
+  ... minimum area retiming step 3 done.
+  Beginning final register move ...
+  ... final register move done.
+  Lower bound estimate = 0.61
+  Critical path length = 0.61
+  Clock correction = 0.13 (clock-to-Q delay = 0.09, setup = 0.04, uncertainty = 0.00)
+  Retiming matvec8_part4_DW_mult_pipe_J1_7 (macUnit_0/pipelinedMultiplier)
+  Preferred flip-flop is DFFS_X1 with setup = 0.04
+
+
+  Retiming base-clock clk, rising edge.
+  Beginning minimum period retiming ...
+  ... minimum period retiming done.
+  Beginning minimum area retiming step 1 ...
+  ... minimum area retiming step 1 done.
+  Beginning minimum area retiming step 2 ...
+  5% 10% 15% 20% 25% 30% 35% 40% 45% 50% 55% 60% 65% 70% 75% 80% 85% 90% 95% 100% 
+  ... minimum area retiming step 2 done.
+  Beginning minimum area retiming step 3 ...
+  10% 20% 30% 40% 50% 60% ... 100% 
+  ... minimum area retiming step 3 done.
+  Beginning final register move ...
+  ... final register move done.
+  Lower bound estimate = 0.61
+  Critical path length = 0.61
+  Clock correction = 0.13 (clock-to-Q delay = 0.09, setup = 0.04, uncertainty = 0.00)
+  Mapping Optimization (Phase 3)
+
+                                  TOTAL                                                
+   ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE 
+    TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER  
+  --------- --------- --------- --------- --------- ------------------------- ---------
+    0:00:30   61410.6      0.21     300.0      97.5 pipelined_adders/adder1/pipelineRegForAdders/Output_reg[21]/D 1589961.8750
+    0:00:30   61410.6      0.21     300.0      97.5 pipelined_adders/adder1/pipelineRegForAdders/Output_reg[21]/D 1589961.8750
+    0:00:31   60842.4      0.14     235.8      10.2                           1567872.1250
+    0:00:32   60771.7      0.36     278.8     391.4                           1565929.2500
+
+  Beginning Constant Register Removal
+  -----------------------------------
+    0:00:32   62141.3      0.69     454.7     178.7                           1639058.1250
+    0:00:33   62134.9      0.69     454.9     185.3                           1638852.8750
+
+  Beginning Global Optimizations
+  ------------------------------
+  Numerical Synthesis (Phase 1)
+  Numerical Synthesis (Phase 2)
+  Global Optimization (Phase 1)
+  Global Optimization (Phase 2)
+  Global Optimization (Phase 3)
+  Global Optimization (Phase 4)
+  Global Optimization (Phase 5)
+  Global Optimization (Phase 6)
+  Global Optimization (Phase 7)
+  Global Optimization (Phase 8)
+  Global Optimization (Phase 9)
+  Global Optimization (Phase 10)
+  Global Optimization (Phase 11)
+  Global Optimization (Phase 12)
+  Global Optimization (Phase 13)
+  Global Optimization (Phase 14)
+  Global Optimization (Phase 15)
+  Global Optimization (Phase 16)
+  Global Optimization (Phase 17)
+  Global Optimization (Phase 18)
+  Global Optimization (Phase 19)
+  Global Optimization (Phase 20)
+  Global Optimization (Phase 21)
+  Global Optimization (Phase 22)
+  Global Optimization (Phase 23)
+  Global Optimization (Phase 24)
+  Global Optimization (Phase 25)
+  Global Optimization (Phase 26)
+  Global Optimization (Phase 27)
+  Global Optimization (Phase 28)
+  Global Optimization (Phase 29)
+  Global Optimization (Phase 30)
+  Global Optimization (Phase 31)
+
+  Beginning Isolate Ports
+  -----------------------
+
+  Beginning Delay Optimization
+  ----------------------------
+    0:00:39   47279.9      0.22     237.5     711.0                           946275.7500
+    0:00:42   47511.9      0.11      84.8     202.6                           956522.7500
+    0:00:42   47511.9      0.11      84.8     202.6                           956522.7500
+    0:00:43   47474.9      0.11      87.6     202.6                           955654.5625
+    0:00:43   47462.1      0.11      87.6     202.6                           955365.2500
+    0:00:44   47453.9      0.11      87.6     202.6                           955152.1875
+
+  Beginning WLM Backend Optimization
+  --------------------------------------
+    0:00:46   46977.7      0.11      71.0     138.5                           934959.1250
+    0:00:46   46872.1      0.11      71.0     138.5                           931467.1875
+    0:00:46   46873.7      0.11      66.7      90.3                           931428.8750
+    0:00:47   46873.7      0.11      66.7      90.3                           931428.8750
+    0:00:47   46847.4      0.11      66.6      90.3                           929243.6875
+    0:00:47   46847.4      0.11      66.6      90.3                           929243.6875
+    0:00:49   46864.4      0.10      55.6      71.1                           929838.4375
+    0:00:49   46864.4      0.10      55.6      71.1                           929838.4375
+    0:00:49   46871.6      0.10      55.3      71.1                           930323.0625
+    0:00:49   46871.6      0.10      55.3      71.1                           930323.0625
+    0:00:49   46872.4      0.10      55.4      71.1                           930375.0625
+    0:00:49   46872.4      0.10      55.4      71.1                           930375.0625
+    0:00:50   46910.2      0.09      46.9      22.9                           932250.5625
+    0:00:50   46910.2      0.09      46.9      22.9                           932250.5625
+    0:00:51   47038.1      0.09      44.5      22.9                           936388.2500
+    0:00:51   47038.1      0.09      44.5      22.9                           936388.2500
+    0:00:51   47090.5      0.08      43.3      22.9                           937899.0625
+    0:00:51   47090.5      0.08      43.3      22.9                           937899.0625
+    0:00:51   47090.5      0.08      43.3      22.9                           937899.0625
+    0:00:51   47090.5      0.08      43.3      22.9                           937899.0625
+    0:00:51   47090.5      0.08      43.3      22.9                           937899.0625
+    0:00:51   47090.5      0.08      43.3      22.9                           937899.0625
+    0:00:52   47090.5      0.08      43.3      22.9                           937899.0625
+
+
+  Beginning Design Rule Fixing  (max_capacitance)
+  ----------------------------
+
+                                  TOTAL                                                
+   ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE 
+    TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER  
+  --------- --------- --------- --------- --------- ------------------------- ---------
+    0:00:52   47090.5      0.08      43.3      22.9                           937899.0625
+  Global Optimization (Phase 32)
+  Global Optimization (Phase 33)
+  Global Optimization (Phase 34)
+    0:00:52   47196.6      0.06      33.1       0.0 macUnit_1/pipelinedMultiplier/mult_x_1/clk_r_REG133_S2/SE 942856.0625
+    0:00:52   47221.9      0.06      31.2       0.0                           943705.6875
+    0:00:53   47222.4      0.06      31.2       0.0                           943726.8750
+
+
+  Beginning Leakage Power Optimization  (max_leakage_power 0)
+  ------------------------------------
+
+                                  TOTAL                                                
+   ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE 
+    TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER  
+  --------- --------- --------- --------- --------- ------------------------- ---------
+    0:00:53   47222.4      0.06      31.2       0.0                           943726.8750
+  Global Optimization (Phase 35)
+  Global Optimization (Phase 36)
+  Global Optimization (Phase 37)
+  Global Optimization (Phase 38)
+  Global Optimization (Phase 39)
+  Global Optimization (Phase 40)
+  Global Optimization (Phase 41)
+  Global Optimization (Phase 42)
+  Global Optimization (Phase 43)
+  Global Optimization (Phase 44)
+  Global Optimization (Phase 45)
+  Global Optimization (Phase 46)
+  Global Optimization (Phase 47)
+  Global Optimization (Phase 48)
+  Global Optimization (Phase 49)
+  Global Optimization (Phase 50)
+    0:00:56   46862.0      0.06      19.2       0.0 output_data[26]           928548.8750
+    0:00:56   46936.2      0.04      15.8       0.0 macUnit_1/pipelinedMultiplier/mult_x_1/clk_r_REG147_S2_IP/SE 930729.1250
+    0:00:56   46944.5      0.04      15.5       0.0                           931022.3750
+    0:00:57   46976.4      0.04      14.1       0.0                           932072.5625
+    0:00:57   46976.4      0.04      14.1       0.0                           932072.5625
+    0:00:58   46975.1      0.04      17.2       0.0                           932041.7500
+    0:00:58   46975.1      0.04      17.2       0.0                           932041.7500
+    0:00:58   46975.1      0.04      17.2       0.0                           932041.7500
+    0:00:58   46975.1      0.04      17.2       0.0                           932041.7500
+    0:00:58   46975.1      0.04      17.2       0.0                           932041.7500
+    0:00:58   46975.1      0.04      17.2       0.0                           932041.7500
+    0:00:58   46975.1      0.04      17.2       0.0                           932041.7500
+    0:00:58   46975.1      0.04      17.2       0.0                           932041.7500
+    0:00:59   46982.0      0.04      16.1       0.0                           932771.7500
+    0:00:59   46982.0      0.04      16.1       0.0                           932771.7500
+    0:00:59   46982.0      0.04      16.1       0.0                           932771.7500
+    0:00:59   46982.0      0.04      16.1       0.0                           932771.7500
+    0:00:59   46982.0      0.04      16.1       0.0                           932771.7500
+    0:00:59   46982.0      0.04      16.1       0.0                           932771.7500
+    0:00:59   46982.0      0.04      16.1       0.0                           932771.7500
+    0:00:59   46982.0      0.04      16.1       0.0                           932771.7500
+    0:01:00   46982.0      0.04      16.1       0.0                           932771.7500
+    0:01:00   46982.0      0.04      16.1       0.0                           932771.7500
+    0:01:00   46982.0      0.04      16.1       0.0                           932771.7500
+
+                                  TOTAL                                                
+   ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE 
+    TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER  
+  --------- --------- --------- --------- --------- ------------------------- ---------
+    0:01:00   46982.0      0.04      16.1       0.0                           932771.7500
+    0:01:01   46833.0      0.04      38.8       0.0                           924671.5000
+    0:01:01   46851.1      0.04      38.2       0.0                           925405.6875
+    0:01:01   46851.1      0.04      38.2       0.0                           925405.6875
+    0:01:02   46888.9      0.04      24.4       0.0                           927696.7500
+    0:01:03   46872.7      0.04      24.1       0.0                           927245.0000
+    0:01:03   46867.1      0.04      23.8       0.0                           926632.0625
+    0:01:09   46879.8      0.04      17.4       0.0                           927514.2500
+    0:01:09   46879.8      0.04      17.4       0.0                           927514.2500
+    0:01:10   46879.8      0.04      17.4       0.0                           927514.2500
+    0:01:10   46879.8      0.04      17.4       0.0                           927514.2500
+    0:01:12   46879.8      0.04      17.4       0.0                           927514.2500
+    0:01:12   46879.8      0.04      17.4       0.0                           927514.2500
+    0:01:13   46879.8      0.04      17.4       0.0                           927514.2500
+    0:01:13   46879.8      0.04      17.4       0.0                           927514.2500
+    0:01:13   46883.3      0.04      16.4       0.0                           927802.1250
+    0:01:13   46883.3      0.04      16.4       0.0                           927802.1250
+    0:01:13   46883.3      0.04      16.4       0.0                           927802.1250
+    0:01:14   46854.0      0.04      16.0       5.0                           925416.6250
+Loading db file '/home/home4/pmilder/ese507/synthesis/lib/NangateOpenCellLibrary_typical.db'
+
+
+Note: Symbol # after min delay cost means estimated hold TNS across all active scenarios 
+
+
+  Optimization Complete
+  ---------------------
+Warning: Design 'matvec8_part4' contains 1 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+     Net 'macUnit_0/pipelinedMultiplier/clk': 5488 load(s), 1 driver(s)
+Information: State dependent leakage is now switched from off to on.
+Information: Propagating switching activity (low effort zero delay simulation). (PWR-6)
+1
+optimize_registers
+  Loading design 'matvec8_part4'
+
+  Beginning retiming
+  ------------------
+Information: Updating design information... (UID-85)
+Warning: Design 'matvec8_part4' contains 1 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+Warning: Retiming is likely to run for an extended
+	period of time due to the large design size. (RTDC-135)
+  Retiming matvec8_part4 (top)
+  Preferred flip-flop is DFFRS_X1 with setup = 0.04
+
+
+  Retiming base-clock clk, rising edge.
+Warning: The input port 'reset' has input rise and fall delay 
+	that is smaller than the clock-to-Q delay used by the retiming 
+	algorithm.For optimal results, make sure to set an input delay 
+	that is realistic. This can be done by using the 'set_input_delay' 
+	or 'characterize' commands. (RTDC-43)
+  Beginning minimum period retiming ...
+  ... minimum period retiming done.
+  Beginning minimum area retiming step 1 ...
+  ... minimum area retiming step 1 done.
+  Beginning minimum area retiming step 2 ...
+  5% 10% 15% 20% 25% 30% 35% 40% 45% 50% 55% 60% 65% 70% 75% 80% 85% 90% 95% 100% 
+  ... minimum area retiming step 2 done.
+  Beginning minimum area retiming step 3 ...
+  10% 20% 30% 40% 50% 60% 70% 80% ... 100% 
+  ... minimum area retiming step 3 done.
+  Beginning final register move ...
+  ... final register move done.
+  Lower bound estimate = 0.69
+  Critical path length = 0.69
+  Clock correction = 0.12 (clock-to-Q delay = 0.09, setup = 0.04, uncertainty = 0.00)
+Warning: Design 'matvec8_part4' contains 13 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+
+  Retiming complete
+  -----------------
+Information: Performing power optimization. (PWR-850)
+Alib files are up-to-date.
+============================================================================
+| Flow Information                                                         |
+----------------------------------------------------------------------------
+| Flow         | Design Compiler                                           |
+============================================================================
+| Design Information                                      | Value          |
+============================================================================
+| Number of Scenarios                                     | 0              |
+| Leaf Cell Count                                         | 24970          |
+| Number of User Hierarchies                              | 9              |
+| Sequential Cell Count                                   | 4810           |
+| Macro Count                                             | 0              |
+| Number of Power Domains                                 | 0              |
+| Design with UPF Data                                    | false          |
+============================================================================
+
+Information: There are 40 potential problems in your design. Please run 'check_design' for more information. (LINT-99)
+
+
+Information: State dependent leakage is now switched from on to off.
+
+  Beginning Pass 1 Mapping  (Incremental)
+  ------------------------
+
+  Updating timing information
+Information: Updating design information... (UID-85)
+
+                                  TOTAL                                                
+   ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE 
+    TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER  
+  --------- --------- --------- --------- --------- ------------------------- ---------
+    0:00:02   44889.4      0.65    1016.2    3551.2                           1045084.6250
+    0:00:02   44889.4      0.65    1016.2    3551.2                           1045084.6250
+
+  Beginning Mapping Optimizations  (Ultra High effort)  (Incremental)
+  -------------------------------
+
+  Beginning Incremental Implementation Selection
+  ----------------------------------------------
+    0:00:04   44795.7      0.47     336.3    2518.1                           1040805.0625
+    0:00:04   44794.1      0.46     336.0    2506.3                           1040742.7500
+    0:00:04   44794.1      0.46     336.0    2506.3                           1040742.7500
+    0:00:04   44793.3      0.46     336.0    2506.3                           1040704.4375
+  Global Optimization (Phase 51)
+  Global Optimization (Phase 52)
+  Global Optimization (Phase 53)
+  Global Optimization (Phase 54)
+  Global Optimization (Phase 55)
+  Global Optimization (Phase 56)
+
+
+
+  Beginning Delay Optimization Phase
+  ----------------------------------
+
+                                  TOTAL                                                
+   ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE 
+    TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER  
+  --------- --------- --------- --------- --------- ------------------------- ---------
+    0:00:06   43168.3      0.39     319.5    2416.7                           970237.5625
+    0:00:06   43168.3      0.39     319.5    2416.7                           897242.5625
+    0:00:07   42838.5      0.39     284.5    2386.8                           880682.8750
+    0:00:07   42838.5      0.39     284.5    2386.8                           954925.0000
+    0:00:07   42837.2      0.30     283.7    2388.5                           954856.4375
+    0:00:07   42837.2      0.30     283.7    2388.5                           954856.4375
+    0:00:07   42847.0      0.25     283.3    2300.2                           955177.9375
+
+  Beginning Delay Optimization
+  ----------------------------
+    0:00:07   42847.0      0.25     283.3    2300.2                           955177.9375
+    0:00:07   42847.0      0.25     283.3    2300.2                           955177.9375
+    0:00:07   42847.0      0.25     283.3    2300.2                           955177.9375
+    0:00:07   42847.0      0.25     283.3    2300.2                           955177.9375
+    0:00:07   42847.0      0.25     283.3    2300.2                           955177.9375
+    0:00:08   42829.5      0.25     283.4    2300.2                           954408.5000
+
+
+  Beginning Design Rule Fixing  (max_transition)  (max_capacitance)
+  ----------------------------
+
+                                  TOTAL                                                
+   ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE 
+    TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER  
+  --------- --------- --------- --------- --------- ------------------------- ---------
+    0:00:08   42829.5      0.25     283.4    2300.2                           954408.5000
+    0:00:09   42936.4      0.12     130.3       0.0 output_data[27]           957955.6250
+    0:00:09   42961.4      0.11     129.7       0.0 output_data[19]           958784.5625
+    0:00:09   42974.7      0.11     125.7       0.0                           884167.3125
+    0:00:10   42972.6      0.11      65.1       0.0                           884005.2500
+    0:00:10   42972.6      0.11      65.1       0.0                           959074.6875
+    0:00:10   42974.7      0.11      65.2       0.0                           959152.8750
+    0:00:10   42974.7      0.11      65.2       0.0                           959152.8750
+    0:00:12   43002.6      0.10      64.8       0.0                           960078.3125
+    0:00:12   43002.6      0.10      64.8       0.0                           960078.3125
+    0:00:12   43002.6      0.10      64.8       0.0                           960078.3125
+    0:00:12   43002.6      0.10      64.8       0.0                           960078.3125
+    0:00:12   43002.6      0.10      64.8       0.0                           960078.3125
+    0:00:13   43013.5      0.10      64.4       0.0                           960397.4375
+    0:00:13   43067.0      0.10      57.0       0.0                           962126.8750
+    0:00:14   43074.7      0.10      56.9       0.0                           962275.5625
+
+
+  Beginning Leakage Power Optimization  (max_leakage_power 0)
+  ------------------------------------
+
+                                  TOTAL                                                
+   ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE 
+    TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER  
+  --------- --------- --------- --------- --------- ------------------------- ---------
+    0:00:14   43074.7      0.10      56.9       0.0                           962275.5625
+    0:00:14   42942.2      0.10      54.4       0.0                           958255.8125
+    0:00:15   42899.4      0.10      54.0       0.0                           956830.0000
+    0:00:16   42904.2      0.09      53.6       0.0 output_data[13]           956975.3750
+    0:00:16   42906.9      0.09      53.6       0.0 output_data[3]            957044.0625
+    0:00:17   42905.8      0.09      53.6       0.0                           883404.7500
+    0:00:17   42899.7      0.09      53.6       0.0                           883167.9375
+    0:00:17   42899.7      0.09      53.6       0.0                           956797.5000
+    0:00:18   42898.9      0.09      53.6       0.0                           956802.6875
+    0:00:18   42898.9      0.09      53.6       0.0                           956802.6875
+    0:00:18   42899.7      0.09      53.6       0.0                           956848.6875
+    0:00:18   42899.7      0.09      53.6       0.0                           956848.6875
+    0:00:19   42899.7      0.09      53.6       0.0                           956848.6875
+    0:00:19   42899.7      0.09      53.6       0.0                           956848.6875
+    0:00:19   42899.7      0.09      53.6       0.0                           956848.6875
+    0:00:19   42899.7      0.09      53.6       0.0                           956848.6875
+
+                                  TOTAL                                                
+   ELAPSED            WORST NEG   SETUP    DESIGN                              LEAKAGE 
+    TIME      AREA      SLACK     COST    RULE COST         ENDPOINT            POWER  
+  --------- --------- --------- --------- --------- ------------------------- ---------
+    0:00:19   42899.7      0.09      53.6       0.0                           883270.3125
+    0:00:20   42899.7      0.09      53.6       0.0                           883270.3125
+    0:00:20   42849.7      0.09      53.6       0.0                           955271.6875
+    0:00:21   42826.8      0.09      52.0       0.0                           954310.0000
+    0:00:22   42685.3      0.09     107.9       0.0                           948382.5000
+    0:00:22   42691.9      0.09     107.7       0.0                           948579.0625
+    0:00:22   42691.9      0.09     107.7       0.0                           948579.0625
+    0:00:22   42701.0      0.09     107.6       6.1                           948879.9375
+    0:00:22   42701.0      0.09     107.6       6.1                           948879.9375
+    0:00:22   42701.0      0.09     107.6       6.1                           948879.9375
+    0:00:22   42701.0      0.09     107.6       6.1                           948879.9375
+    0:00:23   42701.0      0.09     107.6       6.1                           948879.9375
+    0:00:23   42701.0      0.09     107.6       6.1                           948879.9375
+    0:00:23   42691.9      0.09     107.5      52.4                           948535.1250
+    0:00:25   42689.8      0.09     106.3      52.4                           948432.9375
+    0:00:26   42688.2      0.09     106.2      52.4                           948368.3125
+    0:00:27   42688.2      0.09     106.2      52.4                           948368.3125
+    0:00:27   42688.2      0.09     106.2      52.4                           948368.3125
+    0:00:27   42688.2      0.09     106.2      52.4                           948368.3125
+    0:00:27   42678.4      0.09     106.1      50.4                           948025.9375
+Loading db file '/home/home4/pmilder/ese507/synthesis/lib/NangateOpenCellLibrary_typical.db'
+
+
+Note: Symbol # after min delay cost means estimated hold TNS across all active scenarios 
+
+
+  Optimization Complete
+  ---------------------
+Warning: Design 'matvec8_part4' contains 1 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+     Net 'macUnit_0/pipelinedMultiplier/clk': 4810 load(s), 1 driver(s)
+Information: State dependent leakage is now switched from off to on.
+Information: Propagating switching activity (low effort zero delay simulation). (PWR-6)
+1
+report_area
+ 
+****************************************
+Report : area
+Design : matvec8_part4
+Version: S-2021.06-SP5-4
+Date   : Mon Oct 31 09:19:25 2022
+****************************************
+
+Information: Updating design information... (UID-85)
+Warning: Design 'matvec8_part4' contains 1 high-fanout nets. A fanout number of 1000 will be used for delay calculations involving these nets. (TIM-134)
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /home/home4/pmilder/ese507/synthesis/lib/NangateOpenCellLibrary_typical.db)
+
+Number of ports:                          599
+Number of nets:                         24421
+Number of cells:                        23011
+Number of combinational cells:          18191
+Number of sequential cells:              4810
+Number of macros/black boxes:               0
+Number of buf/inv:                       4756
+Number of references:                      48
+
+Combinational area:              20892.438185
+Buf/Inv area:                     2649.892023
+Noncombinational area:           21785.931215
+Macro/Black Box area:                0.000000
+Net Interconnect area:      undefined  (Wire load has zero net area)
+
+Total cell area:                 42678.369400
+Total area:                 undefined
+1
+report_power
+ 
+****************************************
+Report : power
+        -analysis_effort low
+Design : matvec8_part4
+Version: S-2021.06-SP5-4
+Date   : Mon Oct 31 09:19:25 2022
+****************************************
+
+
+Library(s) Used:
+
+    NangateOpenCellLibrary (File: /home/home4/pmilder/ese507/synthesis/lib/NangateOpenCellLibrary_typical.db)
+
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+Design        Wire Load Model            Library
+------------------------------------------------
+matvec8_part4          5K_hvratio_1_1    NangateOpenCellLibrary
+
+
+Global Operating Voltage = 1.1  
+Power-specific unit information :
+    Voltage Units = 1V
+    Capacitance Units = 1.000000ff
+    Time Units = 1ns
+    Dynamic Power Units = 1uW    (derived from V,C,T units)
+    Leakage Power Units = 1nW
+
+
+  Cell Internal Power  =  41.3761 mW   (93%)
+  Net Switching Power  =   2.8939 mW    (7%)
+                         ---------
+Total Dynamic Power    =  44.2700 mW  (100%)
+
+Cell Leakage Power     = 808.4410 uW
+
+
+                 Internal         Switching           Leakage            Total
+Power Group      Power            Power               Power              Power   (   %    )  Attrs
+--------------------------------------------------------------------------------------------------
+io_pad             0.0000            0.0000            0.0000            0.0000  (   0.00%)
+memory             0.0000            0.0000            0.0000            0.0000  (   0.00%)
+black_box          0.0000            0.0000            0.0000            0.0000  (   0.00%)
+clock_network      0.0000            0.0000            0.0000            0.0000  (   0.00%)
+register       3.9315e+04          715.6850        3.7581e+05        4.0407e+04  (  89.64%)
+sequential         0.0000            0.0000            0.0000            0.0000  (   0.00%)
+combinational  2.0607e+03        2.1782e+03        4.3263e+05        4.6715e+03  (  10.36%)
+--------------------------------------------------------------------------------------------------
+Total          4.1376e+04 uW     2.8939e+03 uW     8.0844e+05 nW     4.5078e+04 uW
+1
+report_timing
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -max_paths 1
+Design : matvec8_part4
+Version: S-2021.06-SP5-4
+Date   : Mon Oct 31 09:19:25 2022
+****************************************
+
+ # A fanout number of 1000 was used for high fanout net computations.
+
+Operating Conditions: typical   Library: NangateOpenCellLibrary
+Wire Load Model Mode: top
+
+  Startpoint: clk_r_REG264_S3
+              (rising edge-triggered flip-flop clocked by clk)
+  Endpoint: output_data[4]
+            (output port clocked by clk)
+  Path Group: clk
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  matvec8_part4      5K_hvratio_1_1        NangateOpenCellLibrary
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock clk (rise edge)                                   0.00       0.00
+  clock network delay (ideal)                             0.00       0.00
+  clk_r_REG264_S3/CK (DFF_X1)                             0.00 #     0.00 r
+  clk_r_REG264_S3/Q (DFF_X1)                              0.09       0.09 f
+  U3875/ZN (OAI22_X1)                                     0.06       0.15 r
+  U3863/Z (BUF_X2)                                        0.06       0.20 r
+  output_buffer/rd_addr[5] (output_memory_WIDTH28_SIZE64)
+                                                          0.00       0.20 r
+  output_buffer/U4408/ZN (NOR2_X1)                        0.04       0.25 f
+  output_buffer/U474/ZN (NAND2_X2)                        0.06       0.31 r
+  output_buffer/U4519/ZN (NOR2_X1)                        0.04       0.35 f
+  output_buffer/U632/Z (BUF_X2)                           0.06       0.40 f
+  output_buffer/U4663/ZN (AOI22_X1)                       0.06       0.46 r
+  output_buffer/U400/ZN (AND4_X1)                         0.07       0.53 r
+  output_buffer/U584/ZN (AND4_X1)                         0.07       0.60 r
+  output_buffer/U4665/ZN (NAND2_X1)                       0.02       0.62 f
+  output_buffer/data_out[4] (output_memory_WIDTH28_SIZE64)
+                                                          0.00       0.62 f
+  output_data[4] (out)                                    0.00       0.62 f
+  data arrival time                                                  0.62
+
+  clock clk (rise edge)                                   0.74       0.74
+  clock network delay (ideal)                             0.00       0.74
+  output external delay                                  -0.20       0.54
+  data required time                                                 0.54
+  --------------------------------------------------------------------------
+  data required time                                                 0.54
+  data arrival time                                                 -0.62
+  --------------------------------------------------------------------------
+  slack (VIOLATED)                                                  -0.09
+
+
+1
+write -f verilog $TOP_MOD_NAME -output gates.v -hierarchy
+Writing verilog file '/home/home5/msudhanan/ese507workingdir/project2/part4/gates.v'.
+Warning: Verilog 'assign' or 'tran' statements are written out. (VO-4)
+1
+quit
+
+Memory usage for this session 476 Mbytes.
+Memory usage for this session including child processes 476 Mbytes.
+CPU usage for this session 132 seconds ( 0.04 hours ).
+Elapsed time for this session 141 seconds ( 0.04 hours ).
+
+Thank you...
